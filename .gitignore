@@ -3,5 +3,6 @@
 !.gitignore
 
 !fashion_mnist.py
+!mnist.py
 
 
