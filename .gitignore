@@ -2,6 +2,6 @@
 */
 !.gitignore
 
-!main.py
+!fashion_mnist.py
 
 

@@ -229,8 +229,8 @@ class FashionMNISTDataModule(pl.LightningDataModule):
 
 def main():
     data_module = FashionMNISTDataModule()
-    model = FastBaselineClassifier()
-    trainer = pl.Trainer(max_epochs=20)
+    model = BaselineClassifier()
+    trainer = pl.Trainer(max_epochs=25)
 
     trainer.fit(model, data_module)
     print("Finished training")
