@@ -88,7 +88,9 @@ class Solver:
                 unlabeled_preds = discriminator(unlab_mu)
                 
                 lab_real_preds = torch.ones(labeled_imgs.size(0))
+                lab_real_preds = lab_real_preds.unsqueeze(1)  #must have sam size as labeled_preds
                 unlab_real_preds = torch.ones(unlabeled_imgs.size(0))
+                unlab_real_preds = unlab_real_preds.unsqueeze(1) #must have sam size as unlabeled_preds
                     
                 if self.args.cuda:
                     lab_real_preds = lab_real_preds.cuda()
@@ -121,7 +123,9 @@ class Solver:
                 unlabeled_preds = discriminator(unlab_mu)
                 
                 lab_real_preds = torch.ones(labeled_imgs.size(0))
+                lab_real_preds = lab_real_preds.unsqueeze(1)  # must have sam size as labeled_preds
                 unlab_fake_preds = torch.zeros(unlabeled_imgs.size(0))
+                unlab_fake_preds = unlab_fake_preds.unsqueeze(1)  # must have sam size as unlabeled_preds
 
                 if self.args.cuda:
                     lab_real_preds = lab_real_preds.cuda()
