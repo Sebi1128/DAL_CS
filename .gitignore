@@ -1,8 +1,16 @@
 *
-*/
+
 !.gitignore
 
 !fashion_mnist.py
 !mnist.py
 
 
+!vaal/
+!vaal/*
+
+!vaal/plots/
+!vaal/plots/*
+
+!vaal/plots/imagenet_results/
+!vaal/plots/imagenet_results/*
