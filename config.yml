@@ -1,6 +1,8 @@
 dataset:
   dataset_name: cifar10
-  initial_sampling: 0.1
+  dataset_path: ./data/
+  init_ratio: 0.1
+  # transform: 
 model:
   name: resnet101
 optimizer:
@@ -12,3 +14,4 @@ train:
 evaluate:
   step_sampling: 0.05
   batch_size: 1000
+  

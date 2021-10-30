@@ -1,6 +1,7 @@
 ### Personal Additions ###
 
 **/.vscode
+**/data
 
 ### JupyterNotebooks ###
 # gitignore template for Jupyter Notebooks
