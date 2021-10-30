@@ -1,6 +1,6 @@
 # Deep Learning Project
 
-Authors: Sebastian Frey, Remo Kellenberger, Aron Schmied, and Guney Tombak
+Authors: Sebastian Frey, Remo Kellenberger, Aron Schmied, and Guney Tombak  
 Deep Learning, Department of Computer Science, ETH Zurich  
 
 ## Setup
