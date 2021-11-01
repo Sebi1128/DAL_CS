@@ -1,9 +1,11 @@
 import sys
-from torch.utils import data
+import math
 
 from torchvision.datasets import CIFAR10, CIFAR100
 from torch.utils.data import DataLoader, Subset
 import torch
+
+from src.utils import TRANSFORMS_DICT
 
 DATASETS_DICT = {
 	'cifar10'	: CIFAR10,
@@ -23,12 +25,12 @@ def torch_rp_bool(k:int, n:int):
 
 class ActiveDataset():
 	def __init__(self, dataset_name, 
-              	 dataset_path='./data', init_ratio=0.1,
+              	 dataset_path=None, init_ratio=0.1,
                  val_ratio=0.1, transform=None):	
+
 		self.dataset_name = dataset_name
-		self.dataset_path = dataset_path
-  		
-		self.transform = transform
+		self.dataset_path = './data/' + dataset_name if dataset_path is None else dataset_path
+		self.transform = self._get_transform(transform)
 		
 		self._take_datasets()
 		self._init_mask(init_ratio, val_ratio)
@@ -70,6 +72,18 @@ class ActiveDataset():
 							         train=True,
                         	         transform=self.transform)
 
+	def _get_transform(self, transform):
+
+		if isinstance(transform, str):
+			if transform not in TRANSFORMS_DICT.keys():
+				print(f'No transform known as {transform}')
+				print('Returning None')
+				return None
+			else:
+				return TRANSFORMS_DICT[transform]
+		else:
+			return transform
+
 	def update(self, idx=list()):
 
 		if len(idx) > 0:
@@ -103,4 +117,29 @@ class ActiveDataset():
                             num_workers=num_workers)
 
 		return loader
+
+	def get_itersch(self, uniform=True, setA=None, setB=None):
+
+		setA = self.labeled_trainset if setA is None else setA
+		setB = self.unlabeled_trainset if setB is None else setB 
+		
+		gcdAB = math.gcd(len(setA), len(setB))
+		a, b = len(setA) // gcdAB, len(setB) // gcdAB
+
+		seq_len = a + b
+		n_seq = len(self.trainset) // seq_len
+
+		stack = torch.zeros(n_seq, seq_len, dtype=bool)
+
+		if uniform:
+			stack[:,:a] = True
+		else:
+			for k in range(n_seq):
+				stack[k,:] = torch_rp_bool(a, seq_len)
+
+		iter_schedule = stack.flatten()
+		assert torch.sum(iter_schedule) == len(setA)
+		assert len(iter_schedule) == len(self.trainset)
+
+		return iter_schedule
 
