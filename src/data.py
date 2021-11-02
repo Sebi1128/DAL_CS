@@ -36,6 +36,8 @@ class ActiveDataset():
 		self._init_mask(init_ratio, val_ratio)
 		self.update()
 
+		self.iter_schedule = self.get_itersch()
+
 	def _init_mask(self, init_ratio, val_ratio):
 
 		if (val_ratio + init_ratio) > 1.0:
@@ -80,9 +82,11 @@ class ActiveDataset():
 				print('Returning None')
 				return None
 			else:
-				return TRANSFORMS_DICT[transform]
+				return TRANSFORMS_DICT[transform.lower()]
+		elif transform is None:
+			transform = TRANSFORMS_DICT[transform.lower()]
 		else:
-			return transform
+			return transform[self.dataset_name.lower()]
 
 	def update(self, idx=list()):
 
@@ -97,16 +101,16 @@ class ActiveDataset():
 		self.labeled_trainset = Subset(self.trainset, lbld_idx)
 		self.unlabeled_trainset = Subset(self.trainset, unlbld_idx)
 
-	def get_loader(self, spec, batch_size, shuffle=True, num_workers=-1):
-		if spec.lower == 'train':
+	def get_loader(self, spec, batch_size, shuffle=True, num_workers=1):
+		if spec.lower() == 'train':
 			dataset = self.trainset
-		elif spec.lower == 'test':
+		elif spec.lower() == 'test':
 			dataset = self.testset
-		elif spec.lower in ['valid', 'validation']:
+		elif spec.lower() in ['valid', 'validation']:
 			dataset = self.validset
-		elif spec.lower == 'labeled':
+		elif spec.lower() == 'labeled':
 			dataset = self.labeled_trainset
-		elif spec.lower == 'unlabeled':
+		elif spec.lower() == 'unlabeled':
 			dataset = self.unlabeled_trainset
 		else:
 			sys.exit(f"No set known as {spec}, exiting...")
