@@ -2,6 +2,8 @@
 
 **/.vscode
 **/data
+*try.py
+**/wandb
 
 ### JupyterNotebooks ###
 # gitignore template for Jupyter Notebooks

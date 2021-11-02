@@ -84,9 +84,7 @@ class ActiveDataset():
 			else:
 				return TRANSFORMS_DICT[transform.lower()]
 		elif transform is None:
-			transform = TRANSFORMS_DICT[transform.lower()]
-		else:
-			return transform[self.dataset_name.lower()]
+			return TRANSFORMS_DICT[self.dataset_name.lower()]
 
 	def update(self, idx=list()):
 
