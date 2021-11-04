@@ -14,8 +14,8 @@ dependencies:
   - pip
   - tqdm
   - pyyaml
+  - scipy
   - pip:
     - pickle5
-    - Pygments
     - wandb
 

@@ -24,33 +24,33 @@ def torch_rp_bool(k:int, n:int):
     return x
 
 class ActiveDataset():
-	def __init__(self, dataset_name, 
-              	 dataset_path=None, init_ratio=0.1,
+	def __init__(self, name, 
+              	 path=None, init_lbl_ratio=0.1,
                  val_ratio=0.1, transform=None):	
 
-		self.dataset_name = dataset_name
-		self.dataset_path = './data/' + dataset_name if dataset_path is None else dataset_path
+		self.dataset_name = name
+		self.dataset_path = './data/' + name if path is None else path
 		self.transform = self._get_transform(transform)
 		
 		self._take_datasets()
-		self._init_mask(init_ratio, val_ratio)
+		self._init_mask(init_lbl_ratio, val_ratio)
 		self.update()
 
 		self.iter_schedule = self.get_itersch()
 
-	def _init_mask(self, init_ratio, val_ratio):
+	def _init_mask(self, init_lbl_ratio, val_ratio):
 
-		if (val_ratio + init_ratio) > 1.0:
+		if (val_ratio + init_lbl_ratio) > 1.0:
 			sys.exit('The validation and initialization ratio sum should be less than 1.0!')
 
-		self.init_ratio = init_ratio
+		self.init_ratio = init_lbl_ratio
 		self.val_ratio = val_ratio
 		
 		n_btra = len(self.base_trainset)
 
 		n_val = int(n_btra * val_ratio)
 		n_tra = int(n_btra - n_val)
-		n_lbl = int(n_btra * init_ratio)
+		n_lbl = int(n_btra * init_lbl_ratio)
 
 		self.val_mask = torch_rp_bool(n_val, n_btra)
 		val_idx = torch.where(self.val_mask)[0]
@@ -88,7 +88,7 @@ class ActiveDataset():
 
 	def update(self, idx=list()):
 
-		if len(idx) > 0:
+		if idx:
 			self.lbld_mask[idx] = True
 
 		self.lbld_ratio = torch.sum(self.lbld_mask) / len(self.lbld_mask)
