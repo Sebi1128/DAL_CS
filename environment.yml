@@ -1,0 +1,21 @@
+name: dlp
+
+channels:
+  - conda-forge
+  - defaults
+
+dependencies:
+  - python=3.8.5
+  - pytorch
+  - pytorch-lightning
+  - torchvision
+  - ipykernel
+  - matplotlib
+  - pip
+  - tqdm
+  - pyyaml
+  - scipy
+  - pip:
+    - pickle5
+    - wandb
+
