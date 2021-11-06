@@ -19,8 +19,11 @@ conda install pytorch torchvision torchaudio cudatoolkit=X.Y -c pytorch -c conda
 
 ## Usage
 
-The parameters of the run can be configured by using a `YAML` file:  
+The parameters of the run can be configured by using the `config.py`:
 
 ```shell
-python main.py --file config.yml
+python main.py
 ```
+
+The results are saved using the Weights and Biases system.
+

@@ -26,7 +26,9 @@ def torch_rp_bool(k:int, n:int):
 class ActiveDataset():
 	def __init__(self, name, 
               	 path=None, init_lbl_ratio=0.1,
-                 val_ratio=0.1, transform=None):	
+                 val_ratio=0.1, transform=None):
+
+		print(f'Constructing Active Dataset for {name}:')	
 
 		self.dataset_name = name
 		self.dataset_path = './data/' + name if path is None else path

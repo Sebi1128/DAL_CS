@@ -6,64 +6,42 @@ from pytorch_lightning.core.lightning import LightningModule
 from src.data import ActiveDataset
 
 from src.base_models.encoders import ENCODER_DICT
+from src.base_models.bottlenecks import BOTTLENECK_DICT
 from src.base_models.decoders import DECODER_DICT
 from src.base_models.classifiers import CLASSIFIER_DICT
 
+
 class Net(LightningModule):
-    def __init__(self):
+    def __init__(self, cfg):
         super().__init__()
 
-        self.encoder = nn.Sequential(OrderedDict([
-            ('conv1', nn.Conv2d(3,20,5, padding=2)),
-            ('relu1', nn.ReLU()),
-            ('conv2', nn.Conv2d(20,64,5, padding=2)),
-            ('relu2', nn.ReLU()),
-        ]))
+        # x -> e
+        self.encoder = ENCODER_DICT[cfg.enc['name']](cfg.enc)
+        # e -> b, z
+        self.bottleneck = BOTTLENECK_DICT[cfg.btk['name']](cfg.btk)
+        # b -> r
+        self.decoder = DECODER_DICT[cfg.dec['name']](cfg.dec)
+        # b -> c
+        self.classifier = CLASSIFIER_DICT[cfg.cls['name']](cfg.cls)
 
-        self.bnck1 = nn.Linear(32*32*64, 256)
-        self.relu1 = nn.ReLU()
-        self.bnck2 = nn.Linear(256, 32*32*64)
-        self.relu2 = nn.ReLU()
-        
-        self.decoder = nn.Sequential(OrderedDict([
-            ('conv1', nn.Conv2d(64,20,5, padding=2)),
-            ('relu1', nn.ReLU()),
-            ('conv2', nn.Conv2d(20,3,5, padding=2)),
-        ]))
-        
-        self.classifier = nn.Sequential(OrderedDict([
-            ('linr1', nn.Linear(256, 64)),
-            ('relu1', nn.ReLU()),
-            ('linr2', nn.Linear(64, 10)),
-        ]))
-
-        self.c_loss = nn.NLLLoss()
-        self.r_loss = nn.MSELoss()
+        self.c_loss = self.classifier.loss
+        self.r_loss = self.decoder.loss
 
     def forward(self, x, classify=True, reconstruct=True):
-        batch_size, channels, height, width = x.size()
 
         # Encoder
         x = self.encoder(x)
-        x = x.view(batch_size, -1)
 
         # Bottleneck
-        z = self.bnck1(x) # Latent Space
-        
-        if classify or reconstruct:
-            x = self.relu1(z)
-            x = self.bnck2(x)
-            x = self.relu2(x)
+        x, z = self.bottleneck(x)  
 
-        if classify:
+        if classify: # Classification
             c = self.classifier(z)
-            c = F.log_softmax(c, dim=1) # Classification
         else:
             c = None
 
-        if reconstruct:
-            r = x.view(batch_size, -1, height, width)
-            r = self.decoder(r) # Reconstruction
+        if reconstruct: # Reconstruction
+            r = self.decoder(x) 
         else:
             r = None
 

@@ -19,14 +19,7 @@ def main(cfg):
     
     step_acq_size = cfg.update_ratio * len(active_dataset.trainset)
 
-    if cfg.device.lower() in ['gpu', 'cuda']:
-        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    else:
-        device = torch.device("cpu")
-
-    print(f"Device is {device}")
-
-    model = Net().to(device)
+    model = Net(cfg).to(cfg.device)
     wandb.watch(model)
     
     if cfg.optimizer.lower() == 'adam':
@@ -39,12 +32,12 @@ def main(cfg):
         #TODO: Write a code that saves the parameters with lowest validation loss
         for k in pbar:
             c_train_loss, r_train_loss = train_epoch(model, active_dataset, optimizer, 
-                                                        batch_size=cfg.batch_size, device=device)
+                                                     batch_size=cfg.batch_size, device=cfg.device)
             c_valid_loss, r_valid_loss = validate(model, active_dataset, 
-                                                    batch_size=cfg.batch_size, device=device)
+                                                  batch_size=cfg.batch_size, device=cfg.device)
 
-            info_text = f"C|R Train Loss: {c_train_loss:.5f}|{r_train_loss:.5f}"
-            info_text += f"C|R Valid Loss: {c_valid_loss:.5f}|{r_valid_loss:.5f}"
+            info_text = f"{run_no+1}|C|R Train: {c_train_loss:.5f}|{r_train_loss:.5f}"
+            info_text += f"  Valid: {c_valid_loss:.5f}|{r_valid_loss:.5f}"
             pbar.set_description(info_text, refresh=True)
 
             wandb.log({"r_train_loss": r_train_loss, "c_train_loss": c_train_loss})
@@ -55,7 +48,7 @@ def main(cfg):
 
         if run_no < (cfg.n_runs - 1):
             train2lbl_idx = cal(active_dataset, step_acq_size, 
-                                model, cfg.n_neighs, device)
+                                model, cfg.n_neighs, cfg.device)
             active_dataset.update(train2lbl_idx)
         
         

@@ -28,7 +28,7 @@ def cal(active_data, acq_size, model, n_neigh, device):
     # or using CPU always maybe
 
     pbar = tqdm(D_pool)
-    
+    pbar.set_description(f"Sampling")
     for i, xt_p in enumerate(pbar):
         x_p = xt_p[0].to(device).unsqueeze(0)
         
@@ -49,7 +49,7 @@ def cal(active_data, acq_size, model, n_neigh, device):
                           y_p.cpu().detach().numpy().flatten()).sum()          
         
         S_xp[i] = np.mean(s)
-        pbar.set_description(f"Sampling: {S_xp[i]:.5f}", refresh=True)
+        
 
     # REVIEW CHECK THE TRANSITION
     unlbl2lbl_idx = np.argsort(-1*S_xp)[:acq_size]
