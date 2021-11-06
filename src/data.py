@@ -90,7 +90,7 @@ class ActiveDataset():
 
 	def update(self, idx=list()):
 
-		if idx:
+		if len(idx) > 0:
 			self.lbld_mask[idx] = True
 
 		self.lbld_ratio = torch.sum(self.lbld_mask) / len(self.lbld_mask)
@@ -122,16 +122,17 @@ class ActiveDataset():
 
 		return loader
 
-	def get_itersch(self, uniform=True, setA=None, setB=None):
+	def get_itersch(self, uniform=True, setL=None, setU=None):
 
-		setA = self.labeled_trainset if setA is None else setA
-		setB = self.unlabeled_trainset if setB is None else setB 
+		setL = self.labeled_trainset if setL is None else setL
+		# realize that we can use whole dataset as unlabeled
+		setU = self.trainset if setU is None else setU 
 		
-		gcdAB = math.gcd(len(setA), len(setB))
-		a, b = len(setA) // gcdAB, len(setB) // gcdAB
+		gcdLU = math.gcd(len(setL), len(setU))
+		a, b = len(setL) // gcdLU, len(setU) // gcdLU
 
 		seq_len = a + b
-		n_seq = len(self.trainset) // seq_len
+		n_seq = len(setL + setU) // seq_len
 
 		stack = torch.zeros(n_seq, seq_len, dtype=bool)
 
@@ -142,8 +143,8 @@ class ActiveDataset():
 				stack[k,:] = torch_rp_bool(a, seq_len)
 
 		iter_schedule = stack.flatten()
-		assert torch.sum(iter_schedule) == len(setA)
-		assert len(iter_schedule) == len(self.trainset)
+		assert torch.sum(iter_schedule) == len(setL)
+		assert len(iter_schedule) == len(self.trainset) + len(self.labeled_trainset)
 
 		return iter_schedule
 
