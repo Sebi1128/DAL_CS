@@ -6,6 +6,10 @@ wandb.init(project="Deep Learning Project",
            mode="disabled")
 cfg = wandb.config
 
+# Seed
+
+cfg.seed = 42
+
 # Dataset and Active Learning
 cfg.dataset = { 'name'              : 'cifar10',
                 'init_lbl_ratio'    : 0.1,
