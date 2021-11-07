@@ -5,6 +5,7 @@
 *try.py
 **/wandb
 **/save
+**.idea/
 
 ### JupyterNotebooks ###
 # gitignore template for Jupyter Notebooks
