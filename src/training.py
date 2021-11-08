@@ -17,7 +17,7 @@ def epoch_run(model, active_dataset, optimizer, run_no, model_writer, cfg):
         wandb.log({"r_train_loss": r_train_loss, "c_train_loss": c_train_loss})
         wandb.log({"r_valid_loss": r_valid_loss, "c_valid_loss": c_valid_loss})
 
-        if not (epoch_no or run_no): # initialization
+        if not (epoch_no and run_no): # initialization
             r_best_valid_loss = r_valid_loss
             c_best_valid_loss = c_valid_loss
             model_writer.write(model, 'c_')
