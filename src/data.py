@@ -93,7 +93,9 @@ class ActiveDataset():
 		if len(idx) > 0:
 			self.lbld_mask[idx] = True
 
-		self.lbld_ratio = torch.sum(self.lbld_mask) / len(self.lbld_mask)
+		#self.lbld_ratio = torch.sum(self.lbld_mask) / len(self.lbld_mask)
+		#RuntimeError: Integer division of tensors using div or / is no longer supported, and in a future release div will perform true division as in Python 3. Use true_divide or floor_divide (// in Python) instead.
+		self.lbld_ratio = torch.floor_divide(torch.sum(self.lbld_mask), len(self.lbld_mask))
 
 		lbld_idx = torch.where(self.lbld_mask)[0]
 		unlbld_idx = torch.where(torch.logical_not(self.lbld_mask))[0]
