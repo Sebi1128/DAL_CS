@@ -1,3 +1,4 @@
+import torch
 from pytorch_lightning.core.lightning import LightningModule
 #from torchsummary import summary
 from config import cfg
@@ -21,6 +22,7 @@ class Net(LightningModule):
         # b -> c
         self.classifier = CLASSIFIER_DICT[cfg.cls['name']](cfg.cls)
         #summary(self.classifier, input_size=(3, 32, 32))
+        self.sampler = SAMPLER_DICT[cfg.smp['name']](cfg.smp, cfg.device)
 
         self.c_loss = self.classifier.loss
         self.r_loss = self.decoder.loss
@@ -33,7 +35,7 @@ class Net(LightningModule):
         x = self.encoder(x)
 
         # Bottleneck
-        x, z = self.bottleneck(x)  
+        x, z = self.bottleneck(x)
 
         if classify: # Classification
             if cfg.cls['name'] == 'vaal_with_latent':
@@ -54,6 +56,12 @@ class Net(LightningModule):
         z, _, _ = self.forward(x, classify=False, reconstruct=False)
         return z
 
+    def latent_full(self, x):
+        """ returns latent mean and log var"""
+        # TODO: Replace with real latent stuff from VAE, leave autoencoder at 0
+        z, _, _ = self.forward(x, classify=False, reconstruct=False)
+        return torch.stack((z, torch.ones(z.shape, device=z.device)), -1)
+
     def reconstruct(self, x):
         _, r, _ = self.forward(x, classify=False)
         return r
@@ -61,12 +69,3 @@ class Net(LightningModule):
     def classify(self, x):
         _, _, c = self.forward(x, reconstruct=False)
         return c
-
-
-class Sampler():
-    def __init__(self, cfg_smp):
-        self.base_sampler = SAMPLER_DICT[cfg_smp['name']](cfg_smp)
-
-    def __call__(self, active_data, acq_size, model, device):
-        return self.base_sampler(active_data, acq_size, model, device)
-

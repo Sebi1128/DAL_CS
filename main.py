@@ -1,6 +1,6 @@
 from torch import optim
 from src.data import ActiveDataset
-from src.model import Net, Sampler
+from src.model import Net
 from src.training import epoch_run
 from utils import config_defaulter, ModelWriter
 from config import cfg
@@ -19,7 +19,6 @@ def main(cfg):
     step_acq_size = int(cfg.update_ratio * len(active_dataset.base_trainset))
 
     model = Net(cfg).to(cfg.device)
-    sampler = Sampler(cfg.smp)
     wandb.watch(model)
     
     if cfg.optimizer.lower() == 'adam':
@@ -31,10 +30,14 @@ def main(cfg):
         epoch_run(model, active_dataset, optimizer, run_no, model_writer, cfg)
 
         if run_no < (cfg.n_runs - 1):
-            train2lbl_idx = sampler(active_dataset, step_acq_size, model, cfg.device)
+            train2lbl_idx = model.sampler.sample(
+                active_dataset,
+                step_acq_size,
+                model
+            )
             active_dataset.update(train2lbl_idx)
 
     wandb.run.finish()
-        
+
 if __name__ == "__main__":
     main(cfg)
