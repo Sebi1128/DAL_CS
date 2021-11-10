@@ -12,7 +12,7 @@ class Base_Sampler(nn.Module):
         super().__init__()
         self.cfg_smp = cfg_smp
         self.dev = device
-        self.batch_size = 100
+        self.batch_size = 10
 
     def forward(self, x):
         return 0.0
@@ -38,7 +38,7 @@ def gaussian_kl_div(mu_p, log_var_p, mu_q, log_var_q):
 def gaussian_symmetric_kl_div(mu_p, log_var_p, mu_q, log_var_q):
     """KL(Q||P)-KL(P||Q) where Q, P ~ N(mu_1:k, diag(sigma2_1:k))"""
     return 0.5*(torch.exp(-log_var_q)*(torch.exp(log_var_p) + (mu_q-mu_p)**2)
-                - torch.exp(-log_var_p)*(torch.exp(log_var_q) + (mu_p-mu_q)**2)).sum(1)
+                + torch.exp(-log_var_p)*(torch.exp(log_var_q) + (mu_p-mu_q)**2) -2).sum(1)
 
 
 class CAL(Base_Sampler):
@@ -51,11 +51,11 @@ class CAL(Base_Sampler):
         self.dist_func = lambda y_l, y_p: kl_div(y_l.detach(), y_p.detach()).sum(1)
 
         if cfg_smp['neigh_dist'] == 'l2':
-            self.neigh_dist_func = lambda p, A: torch.sum((p[..., 0] - A[..., 1]) ** 2, axis=1)
+            self.neigh_dist_func = lambda p, A: torch.sum((p[..., 0] - A[..., 0]) ** 2, axis=1)
         elif cfg_smp['neigh_dist'] == 'kldiv':
             self.neigh_dist_func = lambda p, A: gaussian_kl_div(p[..., 0], p[..., 1], A[..., 0], A[..., 1])
         elif cfg_smp['neigh_dist'] == 'sym_kldiv':
-            self.neigh_dist_func = lambda p, A: gaussian_kl_div(p[..., 0], p[..., 1], A[..., 0], A[..., 1])
+            self.neigh_dist_func = lambda p, A: gaussian_symmetric_kl_div(p[..., 0], p[..., 1], A[..., 0], A[..., 1])
         else:
             raise ValueError("cfg_smp.neigh_dist set to {} which is not known".format(cfg_smp['neigh_dist']))
 
