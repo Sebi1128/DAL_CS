@@ -22,7 +22,6 @@ class Net(LightningModule):
         # b -> c
         self.classifier = CLASSIFIER_DICT[cfg.cls['name']](cfg.cls)
         #summary(self.classifier, input_size=(3, 32, 32))
-        self.sampler = SAMPLER_DICT[cfg.smp['name']](cfg.smp, cfg.device)
 
         self.c_loss = self.classifier.loss
         self.r_loss = self.decoder.loss

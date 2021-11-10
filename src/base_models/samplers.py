@@ -5,20 +5,29 @@ import numpy as np
 import torch
 from tqdm import tqdm
 import unittest
+from torch import optim
 
 
-class Base_Sampler(nn.Module):
+class Base_Sampler(pl.LightningModule):
     def __init__(self, cfg_smp, device):
-        super().__init__()
+        super(Base_Sampler, self).__init__()
         self.cfg_smp = cfg_smp
         self.dev = device
         self.batch_size = 10
-
-    def forward(self, x):
-        return 0.0
+        self.trainable = False
 
     def sample(self, active_data, acq_size, model):
         raise NotImplementedError()
+
+    def forward(self):
+        return 0.0
+
+class TrainableSampler(Base_Sampler):
+    def __init__(self, cfg_smp, device, train_every_k):
+        super(TrainableSampler, self).__init__(cfg_smp, device)
+        self.trainable = True
+        self.train_every_k = train_every_k
+        self.optimizer = None
 
 
 class Random(Base_Sampler):
@@ -109,9 +118,9 @@ class CAL(Base_Sampler):
         return torch.argsort(dist)[:n_neigh]
 
 
-class VAALSampler(Base_Sampler):
+class VAALSampler(TrainableSampler):
     def __init__(self, cfg_smp, device):
-        super().__init__(cfg_smp, device)
+        super().__init__(cfg_smp, device, cfg_smp['train_every_k'])
         self.discriminator = Discriminator(self.cfg_smp['latent_dim'])
         self.bce_loss = nn.BCELoss()
 
@@ -121,23 +130,25 @@ class VAALSampler(Base_Sampler):
 
         labeled_preds = self.discriminator(z_labeled)
         unlabeled_preds = self.discriminator(z_unlabeled)
+        return labeled_preds, unlabeled_preds
 
-        lab_real_preds = torch.ones(labeled_preds.shape, device=self.dev)
-        unlab_real_preds = torch.ones(unlabeled_preds.shape, device=self.dev)
-
-        # TODO: Only train encoder with this loss!!
-        dsc_loss = self.bce_loss(labeled_preds, lab_real_preds) + self.bce_loss(unlabeled_preds, unlab_real_preds)
+    def sampler_loss(self, pred):
+        labeled_preds = pred[0]
+        unlabeled_preds = pred[1]
 
         lab_real_preds = torch.ones(labeled_preds.shape, device=self.dev)
         unlab_fake_preds = torch.zeros(unlabeled_preds.shape, device=self.dev)
 
-        # TODO: Only train discriminator with this loss!!
-        dsc_loss = self.bce_loss(labeled_preds, lab_real_preds) + self.bce_loss(unlabeled_preds, unlab_fake_preds)
+        return self.bce_loss(labeled_preds, lab_real_preds) + self.bce_loss(unlabeled_preds, unlab_fake_preds)
 
-        # TODO: Ideally, according to the original GAN paper, one should train discriminator for k steps,
-        #  then generator for one step!!
+    def model_loss(self, pred):
+        labeled_preds = pred[0]
+        unlabeled_preds = pred[1]
 
-        return dsc_loss
+        lab_real_preds = torch.ones(labeled_preds.shape, device=self.dev)
+        unlab_real_preds = torch.ones(unlabeled_preds.shape, device=self.dev)
+
+        return self.bce_loss(labeled_preds, lab_real_preds) + self.bce_loss(unlabeled_preds, unlab_real_preds)
 
     def sample(self, active_data, acq_size, model):
         d_pool = active_data.unlabeled_trainset
@@ -166,7 +177,6 @@ class VAALSampler(Base_Sampler):
 class Discriminator(nn.Module):
     """Adversary architecture(Discriminator) for WAE-GAN.
     Taken from https://github.com/sinhasam/vaal by Samarth Sinha et al."""
-
     def __init__(self, z_dim=10):
         super(Discriminator, self).__init__()
         self.z_dim = z_dim
@@ -195,7 +205,7 @@ import torch.nn.init as init
 def kaiming_init(m):
     """Taken from https://github.com/sinhasam/vaal by Samarth Sinha et al."""
     if isinstance(m, (nn.Linear, nn.Conv2d)):
-        init.kaiming_normal(m.weight)
+        init.kaiming_normal_(m.weight)
         if m.bias is not None:
             m.bias.data.fill_(0)
     elif isinstance(m, (nn.BatchNorm1d, nn.BatchNorm2d)):
