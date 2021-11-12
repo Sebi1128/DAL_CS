@@ -8,9 +8,9 @@ import unittest
 from torch import optim
 
 
-class Base_Sampler(pl.LightningModule):
+class BaseSampler(nn.Module):
     def __init__(self, cfg_smp, device):
-        super(Base_Sampler, self).__init__()
+        super(BaseSampler, self).__init__()
         self.cfg_smp = cfg_smp
         self.dev = device
         self.batch_size = 10
@@ -22,15 +22,21 @@ class Base_Sampler(pl.LightningModule):
     def forward(self):
         return 0.0
 
-class TrainableSampler(Base_Sampler):
-    def __init__(self, cfg_smp, device, train_every_k):
+class TrainableSampler(BaseSampler):
+    def __init__(self, cfg_smp, device):
         super(TrainableSampler, self).__init__(cfg_smp, device)
         self.trainable = True
-        self.train_every_k = train_every_k
+        self.n_sub_epochs = cfg_smp['n_sub_epochs']
         self.optimizer = None
 
+    def sampler_loss(self, pred):
+        raise NotImplementedError()
 
-class Random(Base_Sampler):
+    def model_loss(self, pred):
+        raise NotImplementedError()
+
+
+class Random(BaseSampler):
     def __init__(self, cfg_smp, device):
         super().__init__(cfg_smp, device)
 
@@ -50,13 +56,12 @@ def gaussian_symmetric_kl_div(mu_p, log_var_p, mu_q, log_var_q):
                 + torch.exp(-log_var_p)*(torch.exp(log_var_q) + (mu_p-mu_q)**2) -2).sum(1)
 
 
-class CAL(Base_Sampler):
+class CAL(BaseSampler):
     def __init__(self, cfg_smp, device):
         super().__init__(cfg_smp, device)
 
         self.n_neighs = cfg_smp['n_neighs']
 
-        # This can be parametrized later easily
         self.dist_func = lambda y_l, y_p: kl_div(y_l.detach(), y_p.detach()).sum(1)
 
         if cfg_smp['neigh_dist'] == 'l2':
@@ -69,8 +74,6 @@ class CAL(Base_Sampler):
             raise ValueError("cfg_smp.neigh_dist set to {} which is not known".format(cfg_smp['neigh_dist']))
 
     def sample(self, active_data, acq_size, model):
-
-
         labeled_data = active_data.get_loader('labeled', batch_size=self.batch_size)
         unlabeled_data = active_data.get_loader('unlabeled', batch_size=self.batch_size)
 
@@ -99,10 +102,6 @@ class CAL(Base_Sampler):
 
         score = torch.zeros((len(p_unlab)))
 
-        # NOTE This part is very slow, 
-        # we can improve it using batch etc
-        # or using CPU always maybe
-
         for i in range(len(p_unlab)):
             idxs_neigh = self.find_neighs(z_unlab[i].unsqueeze(0), z_lab, self.n_neighs)
             score[i] = self.dist_func(p_lab[idxs_neigh], p_unlab[i].unsqueeze(0)).mean()
@@ -120,7 +119,7 @@ class CAL(Base_Sampler):
 
 class VAALSampler(TrainableSampler):
     def __init__(self, cfg_smp, device):
-        super().__init__(cfg_smp, device, cfg_smp['train_every_k'])
+        super().__init__(cfg_smp, device)
         self.discriminator = Discriminator(self.cfg_smp['latent_dim'])
         self.bce_loss = nn.BCELoss()
 

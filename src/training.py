@@ -54,7 +54,6 @@ def train_epoch(model, sampler, active_data, optimizer, batch_size, device):
     n_epochs = len(active_data.trainset) // batch_size
     c_losses = list()
     r_losses = list()
-    step_no = 0
     for is_labeled in iter_schedule[:n_epochs]:
 
         if is_labeled:
@@ -65,22 +64,15 @@ def train_epoch(model, sampler, active_data, optimizer, batch_size, device):
             loss = model.c_loss(c, t)
             c_losses.append(loss)
 
-            if sampler.trainable: # if sampler.trainable -> if step_no % ...
+            if sampler.trainable:
                 x_unlabeled, _ = next(unlbl_iter)
+                x_unlabeled.to(device)
                 r_labeled = model.latent(x)
                 r_unlabeled = model.latent(x_unlabeled)
                 sampler_in = (r_labeled, r_unlabeled)
                 sampler_out = sampler(sampler_in)
-                if step_no % sampler.train_every_k == 0:
-                    s_loss = sampler.sampler_loss(sampler_out)
 
-                    sampler.optimizer.zero_grad()
-                    s_loss.backward()
-                    sampler.optimizer.step()
-                else:
-                    s_loss = sampler.model_loss(sampler_out)
-                    loss += s_loss
-                step_no += 1 # TODO: Log sampling loss
+                loss += sampler.model_loss(sampler_out)
         else:
             x, _ = next(all_iter)
             x = x.to(device)
@@ -91,6 +83,31 @@ def train_epoch(model, sampler, active_data, optimizer, batch_size, device):
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
+
+    lbld_DL = active_data.get_loader('labeled', batch_size=batch_size)
+    unlbld_DL = active_data.get_loader('unlabeled', batch_size=batch_size)
+    lbl_iter = iter(lbld_DL)
+    unlbl_iter = iter(unlbld_DL)
+
+    if sampler.trainable:
+        sampler.train()
+        for sub_epoch in range(sampler.n_sub_epochs):
+            for step in range(min(len(lbl_iter), len(unlbl_iter))):
+                x, _ = next(lbl_iter)
+                x_unlabeled, _ = next(unlbl_iter)
+                x = x.to(device)
+                x_unlabeled = x_unlabeled.to(device)
+
+                r_labeled = model.latent(x)
+                r_unlabeled = model.latent(x_unlabeled)
+
+                sampler_in = (r_labeled, r_unlabeled)
+                sampler_out = sampler(sampler_in)
+                loss = sampler.sampler_loss(sampler_out)
+
+        sampler.optimizer.zero_grad()
+        loss.backward()
+        sampler.optimizer.step()
 
     mean_c_loss = torch.mean(torch.tensor(c_losses))
     mean_r_loss = torch.mean(torch.tensor(r_losses))

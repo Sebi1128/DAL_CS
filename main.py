@@ -24,8 +24,8 @@ def main(cfg):
 
     wandb.watch((model, sampler))
 
-    if sampler.trainable: # TODO: Add these configurations to config.py
-        sampler.optimizer = optim.Adam(sampler.parameters(), lr=0.001)
+    if sampler.trainable:
+        sampler.optimizer = optim.Adam(sampler.parameters(), lr=cfg.smp['lr'])
     
     if cfg.optimizer.lower() == 'adam':
         optimizer = optim.Adam(model.parameters(), lr=cfg.learning_rate)
