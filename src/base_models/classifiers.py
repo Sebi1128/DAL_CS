@@ -2,6 +2,7 @@ from collections import OrderedDict
 from torch.nn import functional as F
 from torch import nn
 import torch
+from config import cfg
 from pytorch_lightning.core.lightning import LightningModule
 
 
@@ -18,74 +19,53 @@ model_urls = {
 }
 
 
-class Base_Classifier_VAAL(nn.Module):
+class Classifier_VAAL(nn.Module):
 
-    def __init__(self, features, num_classes=10, init_weights=True):
-        super(Base_Classifier_VAAL, self).__init__()
-        #self.features = features
+    def __init__(self, cfg_cls):
+        super(Classifier_VAAL, self).__init__()
+        self.output_size = cfg_cls['output_size']
+        # Make CNN layers of VGG16 with batch normalization
         self.features = make_layers(cfgs['D'], batch_norm=True)
         self.avgpool = nn.AdaptiveAvgPool2d((7, 7))
-        self.classifier = nn.Sequential(
-            nn.Linear(512 * 7 * 7, 4096),
-            nn.ReLU(True),
-            nn.Dropout(),
-            nn.Linear(4096, 4096),
-            nn.ReLU(True),
-            nn.Dropout(),
-            nn.Linear(4096, num_classes),
-        )
-        if init_weights:
-            self._initialize_weights()
+
+        if cfg.cls['name'] == 'vaal_with_latent':
+            self.classifier = nn.Sequential(
+                nn.Linear(512 * 7 * 7 + 256, 4096),
+                nn.ReLU(True),
+                nn.Dropout(),
+                nn.Linear(4096, 4096),
+                nn.ReLU(True),
+                nn.Dropout(),
+                nn.Linear(4096, self.output_size),
+            )
+        elif cfg.cls['name'] == 'vaal':
+            self.classifier = nn.Sequential(
+                nn.Linear(512 * 7 * 7, 4096),
+                nn.ReLU(True),
+                nn.Dropout(),
+                nn.Linear(4096, 4096),
+                nn.ReLU(True),
+                nn.Dropout(),
+                nn.Linear(4096, self.output_size),
+            )
+        else:
+            raise NotImplementedError()
+
+        self._initialize_weights()
 
         self.loss = nn.CrossEntropyLoss()
 
-    def forward(self, x):
+    def forward(self, x, z, x_bottleneck):
         x = self.features(x)
         x = self.avgpool(x)
         x = torch.flatten(x, 1)
-        x = self.classifier(x)
-        return x
-
-    def _initialize_weights(self):
-        for m in self.modules():
-            if isinstance(m, nn.Conv2d):
-                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
-                if m.bias is not None:
-                    nn.init.constant_(m.bias, 0)
-            elif isinstance(m, nn.BatchNorm2d):
-                nn.init.constant_(m.weight, 1)
-                nn.init.constant_(m.bias, 0)
-            elif isinstance(m, nn.Linear):
-                nn.init.normal_(m.weight, 0, 0.01)
-                nn.init.constant_(m.bias, 0)
-
-class Classifier_VAAL_Latent(nn.Module):
-
-    def __init__(self, features, num_classes=10, init_weights=True):
-        super(Classifier_VAAL_Latent, self).__init__()
-        #self.features = features
-        self.features = make_layers(cfgs['D'], batch_norm=True)
-        self.avgpool = nn.AdaptiveAvgPool2d((7, 7))
-        self.classifier = nn.Sequential(
-            nn.Linear(512 * 7 * 7 + 256, 4096),
-            nn.ReLU(True),
-            nn.Dropout(),
-            nn.Linear(4096, 4096),
-            nn.ReLU(True),
-            nn.Dropout(),
-            nn.Linear(4096, num_classes),
-        )
-        if init_weights:
-            self._initialize_weights()
-
-        self.loss = nn.CrossEntropyLoss()
-
-    def forward(self, x, z):
-        x = self.features(x)
-        x = self.avgpool(x)
-        x = torch.flatten(x, 1)
-        z = torch.flatten(z, 1)
-        x = self.classifier(torch.cat((x, z), dim=1))
+        if cfg.cls['name'] == 'vaal_with_latent':
+            z = torch.flatten(z, 1)
+            x = self.classifier(torch.cat((x, z), dim=1))
+        elif cfg.cls['name'] == 'vaal':
+            x = self.classifier(x)
+        else:
+            raise NotImplementedError()
         return x
 
     def _initialize_weights(self):
@@ -102,10 +82,10 @@ class Classifier_VAAL_Latent(nn.Module):
                 nn.init.constant_(m.bias, 0)
 
 
-def make_layers(cfg, batch_norm=False):
+def make_layers(cfg_layer, batch_norm=False):
     layers = []
     in_channels = 3
-    for v in cfg:
+    for v in cfg_layer:
         if v == 'M':
             layers += [nn.MaxPool2d(kernel_size=2, stride=2)]
         else:
@@ -141,13 +121,14 @@ class Base_Classifier_Dummy(nn.Module):
         self.loss = nn.NLLLoss() 
         # should define a loss corresponding to the output
 
-    def forward(self, x):
-        x = x.view(x.size(0), -1)
-        x = self.classifier(x)
-        c = F.log_softmax(x, dim=1)
+    def forward(self, x, z, x_bottleneck):
+        z = z.view(z.size(0), -1)
+        z = self.classifier(z)
+        c = F.log_softmax(z, dim=1)
         return c
 
 CLASSIFIER_DICT = {
-    'vaal_with_latent': Classifier_VAAL_Latent,
+    'vaal': Classifier_VAAL,
+    'vaal_with_latent': Classifier_VAAL,
     'base': Base_Classifier_Dummy
 }

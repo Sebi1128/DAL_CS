@@ -23,7 +23,7 @@ cfg.smp = {'name': 'cal', 'n_neighs': 10, 'neigh_dist': 'kldiv'}
 #cfg.smp = {'name': 'vaal', 'latent_dim': 256, 'lr': 0.001, 'n_sub_epochs': 1}
 
 # Run Hyperparameters 
-cfg.batch_size = 10
+cfg.batch_size = 11
 cfg.n_epochs = 20
 
 cfg.optimizer = 'adam'
@@ -38,5 +38,5 @@ cfg.device = 'gpu'
 cfg.enc = {'name'   : 'base'}
 cfg.btk = {'name'   : 'base'}
 cfg.dec = {'name'   : 'base'}
-cfg.cls = {'name'   : 'base'}
+cfg.cls = {'name'   : 'vaal_with_latent'}
 

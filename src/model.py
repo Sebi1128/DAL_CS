@@ -1,7 +1,6 @@
 import torch
 from pytorch_lightning.core.lightning import LightningModule
 #from torchsummary import summary
-from config import cfg
 
 from src.base_models.encoders import ENCODER_DICT
 from src.base_models.bottlenecks import BOTTLENECK_DICT
@@ -27,8 +26,8 @@ class Net(LightningModule):
         self.r_loss = self.decoder.loss
 
     def forward(self, x, classify=True, reconstruct=True):
-        if cfg.cls['name']=='vaal_with_latent':
-            x_save = x
+        # Keep for classification
+        x_save = x
 
         # Encoder
         x = self.encoder(x)
@@ -37,10 +36,7 @@ class Net(LightningModule):
         x, z = self.bottleneck(x)
 
         if classify: # Classification
-            if cfg.cls['name'] == 'vaal_with_latent':
-                c = self.classifier(x_save, z)
-            else:
-                c = self.classifier(z)
+            c = self.classifier(x_save, z, x)
         else:
             c = None
 
