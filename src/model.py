@@ -33,7 +33,8 @@ class Net(LightningModule):
         x = self.encoder(x)
 
         # Bottleneck
-        x, z = self.bottleneck(x)
+        x, latent = self.bottleneck(x)
+        z = latent[0]
 
         if classify: # Classification
             c = self.classifier(x_save, z, x)
@@ -45,17 +46,18 @@ class Net(LightningModule):
         else:
             r = None
 
-        return z, r, c
+        return latent, r, c
 
     def latent(self, x):
-        z, _, _ = self.forward(x, classify=False, reconstruct=False)
-        return z
+        latent, _, _ = self.forward(x, classify=False, reconstruct=False)
+        return latent[0]
 
     def latent_full(self, x):
         """ returns latent mean and log var"""
-        # TODO: Replace with real latent stuff from VAE, leave autoencoder at 0
-        z, _, _ = self.forward(x, classify=False, reconstruct=False)
-        return torch.stack((z, torch.ones(z.shape, device=z.device)), -1)
+        latent, _, _ = self.forward(x, classify=False, reconstruct=False)
+        mu = latent[1]
+        logvar = latent[2]
+        return torch.stack((mu, logvar), -1)
 
     def reconstruct(self, x):
         _, r, _ = self.forward(x, classify=False)
