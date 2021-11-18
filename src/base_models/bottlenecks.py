@@ -4,16 +4,32 @@ from torch import nn
 import torch
 from pytorch_lightning.core.lightning import LightningModule
 
-# Dummy Bottleneck
-class Base_Bottleneck(nn.Module):
-    def __init__(self, cfg_btk):
-        super().__init__()
 
-        #REVIEW Z should be before or ReLU or Not?
-        
-        self.linr1 = nn.Linear(32*32*64, 256)
+class Bottleneck(nn.Module):
+    def __init__(self, cfg_btk):
+        super(Bottleneck, self).__init__()
+
+    def forward(self, x, latent, output):
+        raise NotImplementedError()
+
+    def latent(self, x):
+        _, latent = self.forward(x, latent=True, output=False)
+        return latent
+
+    def output(self, x):
+        y, _ = self.forward(x, latent=False, output=True)
+        return y
+
+
+class Base_Bottleneck(Bottleneck):
+    def __init__(self, cfg_btk):
+        super(Base_Bottleneck, self).__init__(cfg_btk)
+
+        # REVIEW Z should be before or ReLU or Not?
+
+        self.linr1 = nn.Linear(32 * 32 * 64, 256)
         self.relu1 = nn.ReLU()
-        self.linr2 = nn.Linear(256, 32*32*64)
+        self.linr2 = nn.Linear(256, 32 * 32 * 64)
         self.relu2 = nn.ReLU()
 
     def forward(self, x, latent=True, output=True):
@@ -26,16 +42,36 @@ class Base_Bottleneck(nn.Module):
             y = self.relu2(x)
         else:
             y = None
-        
+
         return y, z
 
-    def latent(self, x):
-        _, z = self.forward(x, latent=True, output=False)
+
+class VAAL_Bottleneck(Bottleneck):
+    def __init__(self, cfg_btk):
+        super(VAAL_Bottleneck, self).__init__(cfg_btk)
+        self.z_dim = cfg_btk['z_dim']
+        self.fc_mu = nn.Linear(1024 * 2 * 2, self.z_dim)
+        self.fc_logvar = nn.Linear(1024 * 2 * 2, self.z_dim)
+
+        self.out = nn.Linear(256, 1024 * 4 * 4) # VAAL uses some strange decoder
+
+    def reparameterize(self, mu, logvar):
+        std = torch.exp(0.5*logvar)
+        eps = torch.rand_like(std)
+        if mu.is_cuda:
+            std.cuda()
+            eps.cuda()
+        z = mu + (eps * std)
         return z
 
-    def output(self, x):
-        y, _ = self.forward(x, latent=False, output=True)
-        return y
-        
+    def forward(self, x, latent=True, output=True):
+        mu, logvar = self.fc_mu(x), self.fc_logvar(x)
+        z = self.reparameterize(mu, logvar)
+        y = None
+        if output:
+            y = self.out(z)
 
-BOTTLENECK_DICT = {'base'  : Base_Bottleneck}
+        return y, [z, mu, logvar]
+
+
+BOTTLENECK_DICT = {"base": Base_Bottleneck, "vaal": VAAL_Bottleneck}
