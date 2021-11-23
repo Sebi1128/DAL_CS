@@ -2,7 +2,6 @@ from collections import OrderedDict
 from torch.nn import functional as F
 from torch import nn
 import torch
-from pytorch_lightning.core.lightning import LightningModule
 from torch.nn.modules.batchnorm import BatchNorm2d
 
 

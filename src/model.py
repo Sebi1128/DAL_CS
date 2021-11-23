@@ -1,5 +1,5 @@
 import torch
-from pytorch_lightning.core.lightning import LightningModule
+from torch import nn
 #from torchsummary import summary
 
 from src.base_models.encoders import ENCODER_DICT
@@ -8,7 +8,7 @@ from src.base_models.decoders import DECODER_DICT
 from src.base_models.classifiers import CLASSIFIER_DICT
 from src.base_models.samplers import SAMPLER_DICT
 
-class Net(LightningModule):
+class Net(nn.Module):
     def __init__(self, cfg):
         super().__init__()
 

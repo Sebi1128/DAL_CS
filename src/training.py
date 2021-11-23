@@ -4,10 +4,9 @@ import torch
 
 def epoch_run(model, sampler, active_dataset, optimizer, run_no, model_writer, cfg):
     pbar = tqdm(range(cfg.n_epochs))
-    #pbar = tqdm(range(2))  # debug
+    pbar = tqdm(range(2)) # debug
+    pbar.set_description("validation")
 
-    #r_best_epoch_no = -1
-    #c_best_epoch_no = -1
     acc_best_valid = -1
 
     for epoch_no in pbar:
@@ -63,13 +62,15 @@ def train_epoch(model, sampler, active_data, optimizer, batch_size, device):
     all_iter = iter(all_DL)
 
     n_epochs = len(active_data.trainset) // batch_size
-    #n_epochs = 10 # debug
+    n_epochs = 3 # debug
     c_losses = list()
     r_losses = list()
     se_losses = list()
     ss_losses = list()
-    for is_labeled in iter_schedule[:n_epochs]:
 
+    pbar = tqdm(iter_schedule[:n_epochs], leave=False)
+    pbar.set_description("training")
+    for is_labeled in pbar:
         if is_labeled:
             x, t = next(lbl_iter)
             x = x.to(device)
@@ -172,7 +173,7 @@ def validate_epoch(model, sampler, active_data, batch_size, device):
             loss = sampler.sampler_loss(sampler_out)
             ss_losses.append(loss)
 
-        #break # DEBUG
+        break # DEBUG
 
     result = {
         'classification_loss_val': torch.mean(torch.tensor(c_losses)),
