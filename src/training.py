@@ -92,8 +92,8 @@ def train_epoch(model, sampler, active_data, optimizer, batch_size, device):
         else:
             x, _ = next(all_iter)
             x = x.to(device)
-            r = model.reconstruct(x)
-            loss = model.r_loss(r.flatten(), x.flatten())
+            r, latent = model.reconstruct(x)
+            loss = model.r_loss(r.flatten(), x.flatten(), *latent[1:])['loss']
             r_losses.append(loss)
             
         optimizer.zero_grad()
@@ -160,8 +160,8 @@ def validate_epoch(model, sampler, active_data, batch_size, device):
         correct += (c.argmax(1) == t).sum()
         total += len(t)
 
-        r = model.reconstruct(x)
-        loss = model.r_loss(r.flatten(), x.flatten())
+        r, latent = model.reconstruct(x)
+        loss = model.r_loss(r.flatten(), x.flatten(), *latent[1:])['loss']
         r_losses.append(loss)
 
         if sampler.trainable:

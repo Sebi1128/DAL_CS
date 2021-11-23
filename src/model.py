@@ -60,8 +60,8 @@ class Net(nn.Module):
         return torch.stack((mu, logvar), -1)
 
     def reconstruct(self, x):
-        _, r, _ = self.forward(x, classify=False)
-        return r
+        latent, r, _ = self.forward(x, classify=False)
+        return r, latent
 
     def classify(self, x):
         _, _, c = self.forward(x, reconstruct=False)

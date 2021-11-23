@@ -46,10 +46,11 @@ def get_wandb_config():
 
     cfg.enc = {'name'   : 'vaal'}
 
+    cfg.dec = {'name'       : 'vaal',
+               'kld_weight' : 1}
+
     cfg.btk = {'name'   : 'vaal',
                'z_dim'  : 32}
-
-    cfg.dec = {'name'   : 'vaal'}
 
     cfg.cls = {'name'   : 'vaal_with_latent',
                'z_dim'  : 32}
