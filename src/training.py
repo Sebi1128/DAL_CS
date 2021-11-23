@@ -4,36 +4,47 @@ import torch
 
 def epoch_run(model, sampler, active_dataset, optimizer, run_no, model_writer, cfg):
     pbar = tqdm(range(cfg.n_epochs))
-    for epoch_no in pbar:
-        c_train_loss, r_train_loss = train_epoch(model, sampler, active_dataset, optimizer,
-                                                 batch_size=cfg.batch_size, device=cfg.device)
-        c_valid_loss, r_valid_loss = validate_epoch(model, sampler, active_dataset,
-                                                    batch_size=cfg.batch_size, device=cfg.device)
+    #pbar = tqdm(range(2))  # debug
 
-        info_text = f"{run_no+1}|C|R|S Train: {c_train_loss:.5f}|{r_train_loss:.5f}"
-        info_text += f"  Valid: {c_valid_loss:.5f}|{r_valid_loss:.5f}"
+    #r_best_epoch_no = -1
+    #c_best_epoch_no = -1
+    acc_best_valid = -1
+
+    for epoch_no in pbar:
+        train_loss = train_epoch(model, sampler, active_dataset, optimizer, batch_size=cfg.batch_size,
+                                 device=cfg.device)
+        valid_loss, valid_acc = validate_epoch(model, sampler, active_dataset, batch_size=cfg.batch_size,
+                                                   device=cfg.device)
+
+        info_text = f"{run_no+1}|C|R|SE|SS Train:|" + '|'.join([f"{val:.5f}" for val in train_loss.values()]) + '|'
+        info_text += f"  Valid:|" + '|'.join([f"{val:.5f}" for val in valid_loss.values()]) + '|'
+        info_text += f" Task Acc: {valid_acc:3.3f}%"
         pbar.set_description(info_text, refresh=True)
 
-        wandb.log({"r_train_loss": r_train_loss, "c_train_loss": c_train_loss})
-        wandb.log({"r_valid_loss": r_valid_loss, "c_valid_loss": c_valid_loss})
+        train_loss['epoch'] = epoch_no
+        train_loss['run_no'] = run_no
+        valid_loss['epoch'] = epoch_no
+        valid_loss['run_no'] = run_no
+        wandb.log(train_loss)
+        wandb.log(valid_loss)
+        wandb.log({"valid accuracy": valid_acc, "epoch": epoch_no, "run_no": run_no})
 
-        if not (epoch_no and run_no): # initialization
-            r_best_valid_loss = r_valid_loss
-            c_best_valid_loss = c_valid_loss
-            model_writer.write(model, 'c_')
-            model_writer.write(model, 'r_')
-        else:
-            if r_valid_loss < r_best_valid_loss:
-                r_best_epoch_no = epoch_no
-            if c_valid_loss < c_best_valid_loss:
-                c_best_epoch_no = epoch_no
+        # No need for evaluating this, we can observe it on wandb
+        #if r_valid_loss < r_best_valid_loss:
+        #    r_best_epoch_no = epoch_no
+        #if c_valid_loss < c_best_valid_loss:
+        #    c_best_epoch_no = epoch_no
+        if valid_acc > acc_best_valid:
+            name = f'run_{run_no:01d}_epo_{epoch_no:04d}_'
+            model_writer.write(model, 'model_'+name)
+            if sampler.trainable:
+                model_writer.write(sampler, 'sampler_' + name)
 
-        if not epoch_no:
-            r_best_epoch_no = -1
-            c_best_epoch_no = -1
+    test_acc = test_epoch(model, active_dataset, batch_size=cfg.batch_size, device=cfg.device)
+    wandb.log({"test accuracy": test_acc, "run_no": run_no})
 
-    print(f"Best Classification Loss \t{c_best_valid_loss} with Epoch No {c_best_epoch_no} for Run {run_no}")
-    print(f"Final Reconstruction Loss \t{r_best_valid_loss} with Epoch No {r_best_epoch_no} for Run {run_no}")
+    #print(f"Best Classification Loss \t{c_best_valid_loss} with Epoch No {c_best_epoch_no} for Run {run_no}")
+   # print(f"Final Reconstruction Loss \t{r_best_valid_loss} with Epoch No {r_best_epoch_no} for Run {run_no}")
 
 
 def train_epoch(model, sampler, active_data, optimizer, batch_size, device):
@@ -52,8 +63,11 @@ def train_epoch(model, sampler, active_data, optimizer, batch_size, device):
     all_iter = iter(all_DL)
 
     n_epochs = len(active_data.trainset) // batch_size
+    #n_epochs = 10 # debug
     c_losses = list()
     r_losses = list()
+    se_losses = list()
+    ss_losses = list()
     for is_labeled in iter_schedule[:n_epochs]:
 
         if is_labeled:
@@ -71,8 +85,9 @@ def train_epoch(model, sampler, active_data, optimizer, batch_size, device):
                 r_unlabeled = model.latent(x_unlabeled)
                 sampler_in = (r_labeled, r_unlabeled)
                 sampler_out = sampler(sampler_in)
-
-                loss += sampler.model_loss(sampler_out)
+                se_loss = sampler.model_loss(sampler_out)
+                se_losses.append(se_loss)
+                loss += se_loss
         else:
             x, _ = next(all_iter)
             x = x.to(device)
@@ -84,12 +99,12 @@ def train_epoch(model, sampler, active_data, optimizer, batch_size, device):
         loss.backward()
         optimizer.step()
 
-    lbld_DL = active_data.get_loader('labeled', batch_size=batch_size)
-    unlbld_DL = active_data.get_loader('unlabeled', batch_size=batch_size)
-    lbl_iter = iter(lbld_DL)
-    unlbl_iter = iter(unlbld_DL)
-
     if sampler.trainable:
+        lbld_DL = active_data.get_loader('labeled', batch_size=batch_size)
+        unlbld_DL = active_data.get_loader('unlabeled', batch_size=batch_size)
+        lbl_iter = iter(lbld_DL)
+        unlbl_iter = iter(unlbld_DL)
+
         sampler.train()
         for sub_epoch in range(sampler.n_sub_epochs):
             for step in range(min(len(lbl_iter), len(unlbl_iter))):
@@ -104,15 +119,20 @@ def train_epoch(model, sampler, active_data, optimizer, batch_size, device):
                 sampler_in = (r_labeled, r_unlabeled)
                 sampler_out = sampler(sampler_in)
                 loss = sampler.sampler_loss(sampler_out)
+                ss_losses.append(loss)
 
-        sampler.optimizer.zero_grad()
-        loss.backward()
-        sampler.optimizer.step()
+                sampler.optimizer.zero_grad()
+                loss.backward()
+                sampler.optimizer.step()
 
-    mean_c_loss = torch.mean(torch.tensor(c_losses))
-    mean_r_loss = torch.mean(torch.tensor(r_losses))
+    result = {
+        'classification_loss_train': torch.mean(torch.tensor(c_losses)),
+        'reconstruction_loss_train': torch.mean(torch.tensor(r_losses)),
+        'sampling_embedding_loss_train': torch.mean(torch.tensor(se_losses)),
+        'sampling_sampler_loss_train': torch.mean(torch.tensor(ss_losses))
+    }
 
-    return mean_c_loss, mean_r_loss
+    return result
 
         
 def validate_epoch(model, sampler, active_data, batch_size, device):
@@ -124,25 +144,59 @@ def validate_epoch(model, sampler, active_data, batch_size, device):
 
     c_losses = list()
     r_losses = list()
-    
+    se_losses = list()
+    ss_losses = list()
+
+    correct = 0
+    total = 0
     for x, t in valid_DL:
-            
         x = x.to(device)
         t = t.to(device)
         c = model.classify(x)
         loss = model.c_loss(c, t)
         c_losses.append(loss)
 
-    for x, t in valid_DL:
-
-        x = x.to(device)
-        t = t.to(device)
+        correct += (c.argmax(1) == t).sum()
+        total += len(t)
 
         r = model.reconstruct(x)
         loss = model.r_loss(r.flatten(), x.flatten())
         r_losses.append(loss)
-        
-    mean_c_loss = torch.mean(torch.tensor(c_losses))
-    mean_r_loss = torch.mean(torch.tensor(r_losses))
 
-    return mean_c_loss, mean_r_loss
+        if sampler.trainable:
+            sampler_in = (r_labeled, r_unlabeled)
+            sampler_out = sampler(sampler_in)
+            loss = sampler.model_loss(sampler_out)
+            se_losses.append(loss)
+
+            loss = sampler.sampler_loss(sampler_out)
+            ss_losses.append(loss)
+
+        #break # DEBUG
+
+    result = {
+        'classification_loss_val': torch.mean(torch.tensor(c_losses)),
+        'reconstruction_loss_val': torch.mean(torch.tensor(r_losses)),
+        'sampling_embedding_loss_val': torch.mean(torch.tensor(se_losses)),
+        'sampling_sampler_loss_val': torch.mean(torch.tensor(ss_losses))
+    }
+
+    return result, correct / total * 100
+
+
+def test_epoch(model, active_data, batch_size, device):
+    test_DL = active_data.get_loader('test', batch_size=batch_size)
+
+    correct = 0
+    total = 0
+
+    for x, t in test_DL:
+        x = x.to(device)
+        t = t.to(device)
+        c = model.classify(x)
+
+        correct += (c.argmax(1) == t).sum()
+        total += len(t)
+
+    return correct / total * 100
+

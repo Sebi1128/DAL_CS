@@ -53,7 +53,7 @@ class VAAL_Bottleneck(Bottleneck):
         self.fc_mu = nn.Linear(1024 * 2 * 2, self.z_dim)
         self.fc_logvar = nn.Linear(1024 * 2 * 2, self.z_dim)
 
-        self.out = nn.Linear(256, 1024 * 4 * 4) # VAAL uses some strange decoder
+        self.out = nn.Linear(self.z_dim, 1024 * 4 * 4) # VAAL uses some strange decoder
 
     def reparameterize(self, mu, logvar):
         std = torch.exp(0.5*logvar)

@@ -1,7 +1,6 @@
 import os
 import random
 from shutil import copyfile
-from datetime import datetime
 
 import numpy as np
 import torch
@@ -75,9 +74,8 @@ def seed_everything(seed: int):
     
 class ModelWriter():
     def __init__(self, cfg):
-        self.date = datetime.now().strftime("%Y_%m_%d_%H%M")[2:]
         self.name = wandb.run.name
-        self.dir = SAVE_DIR_PARAM + self.date + '-' + self.name + '/'
+        self.dir = './save/param/' + self.name + '/'
         os.makedirs(self.dir)
         copyfile(CONFIG_DIR, self.dir + 'config.py')
 

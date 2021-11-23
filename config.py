@@ -1,46 +1,57 @@
 import wandb
+from datetime import datetime
+import torch
 
 # Start a W&B run
-wandb.init(project="Deep Learning Project", 
-           entity="active_learners",
-           mode="disabled")
-cfg = wandb.config
+#wandb.init(project="Deep Learning Project",
+#           entity="active_learners",
+#           mode="disabled")
 
-# Seed
+def get_wandb_config():
+    experiment_name = "Initial_Test"
+    wandb.init(project="Deep Learning Project") #, mode="disabled")
+    run_name = datetime.now().strftime("%Y_%m_%d_%H%M")[2:] + '_' + experiment_name + '_' + wandb.run.id
+    wandb.run.name = run_name
 
-cfg.seed = 42
 
-# Dataset and Active Learning
-cfg.dataset = { 'name'              : 'cifar10',
-                'init_lbl_ratio'    : 0.1,
-                'val_ratio'         : 0.1,}
+    cfg = wandb.config
 
-cfg.update_ratio = 0.05
-cfg.n_runs = 9 # should be one more than the number of sampling updates
+    # Seed
+    cfg.seed = 42
 
-cfg.smp = {'name': 'cal', 'n_neighs': 10, 'neigh_dist': 'kldiv'}
-#cfg.smp = {'name': 'random'}
-#cfg.smp = {'name': 'vaal', 'latent_dim': 256, 'lr': 0.001, 'n_sub_epochs': 1}
+    # Dataset and Active Learning
+    cfg.dataset = { 'name'              : 'cifar10',
+                    'init_lbl_ratio'    : 0.1,
+                    'val_ratio'         : 0.1,}
 
-# Run Hyperparameters 
-cfg.batch_size = 11
-cfg.n_epochs = 20
+    cfg.update_ratio = 0.05
+    cfg.n_runs = 9 # should be one more than the number of sampling updates
 
-cfg.optimizer = 'adam'
-cfg.learning_rate = 0.001
-cfg.momentum = 0.0
+    #cfg.smp = {'name': 'cal', 'n_neighs': 10, 'neigh_dist': 'kldiv'}
+    cfg.smp = {'name': 'random'}
+    #cfg.smp = {'name': 'vaal', 'latent_dim': 256, 'lr': 0.001, 'n_sub_epochs': 1}
 
-# System
-cfg.device = 'gpu'
+    # Run Hyperparameters
+    cfg.batch_size = 16     # 128
+    cfg.n_epochs = 20       # 100
 
-# Architecture
+    cfg.optimizer = 'adam'
+    cfg.learning_rate = 0.001
+    cfg.momentum = 0.0
 
-cfg.enc = {'name'   : 'vaal'}
+    # System
+    cfg.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-cfg.btk = {'name'   : 'vaal',
-           'z_dim'  : 256}
+    # Architecture
 
-cfg.dec = {'name'   : 'vaal'}
+    cfg.enc = {'name'   : 'vaal'}
 
-cfg.cls = {'name'   : 'vaal_with_latent'}
+    cfg.btk = {'name'   : 'vaal',
+               'z_dim'  : 32}
+
+    cfg.dec = {'name'   : 'vaal'}
+
+    cfg.cls = {'name'   : 'vaal_with_latent',
+               'z_dim'  : 32}
+    return cfg
 

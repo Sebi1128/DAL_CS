@@ -2,7 +2,6 @@ from collections import OrderedDict
 from torch.nn import functional as F
 from torch import nn
 import torch
-from config import cfg
 from pytorch_lightning.core.lightning import LightningModule
 
 
@@ -23,14 +22,15 @@ class Classifier_VAAL(nn.Module):
 
     def __init__(self, cfg_cls):
         super(Classifier_VAAL, self).__init__()
-        self.output_size = cfg_cls['output_size']
+        self.cfg_cls = cfg_cls
+        self.output_size =  self.cfg_cls['output_size']
         # Make CNN layers of VGG16 with batch normalization
         self.features = make_layers(cfgs['D'], batch_norm=True)
         self.avgpool = nn.AdaptiveAvgPool2d((7, 7))
 
-        if cfg.cls['name'] == 'vaal_with_latent':
+        if self.cfg_cls['name'] == 'vaal_with_latent':
             self.classifier = nn.Sequential(
-                nn.Linear(512 * 7 * 7 + 256, 4096),
+                nn.Linear(512 * 7 * 7 +  self.cfg_cls['z_dim'], 4096),
                 nn.ReLU(True),
                 nn.Dropout(),
                 nn.Linear(4096, 4096),
@@ -38,7 +38,7 @@ class Classifier_VAAL(nn.Module):
                 nn.Dropout(),
                 nn.Linear(4096, self.output_size),
             )
-        elif cfg.cls['name'] == 'vaal':
+        elif  self.cfg_cls['name'] == 'vaal':
             self.classifier = nn.Sequential(
                 nn.Linear(512 * 7 * 7, 4096),
                 nn.ReLU(True),
@@ -59,10 +59,10 @@ class Classifier_VAAL(nn.Module):
         x = self.features(x)
         x = self.avgpool(x)
         x = torch.flatten(x, 1)
-        if cfg.cls['name'] == 'vaal_with_latent':
+        if  self.cfg_cls['name'] == 'vaal_with_latent':
             z = torch.flatten(z, 1)
             x = self.classifier(torch.cat((x, z), dim=1))
-        elif cfg.cls['name'] == 'vaal':
+        elif self.cfg_cls['name'] == 'vaal':
             x = self.classifier(x)
         else:
             raise NotImplementedError()
@@ -110,8 +110,8 @@ cfgs = {
 class Base_Classifier_Dummy(nn.Module):
     def __init__(self, cfg_cls):
         super().__init__()
-        
-        self.output_size = cfg_cls['output_size']
+        self.cfg_cls = cfg_cls
+        self.output_size = self.cfg_cls['output_size']
         self.classifier = nn.Sequential(OrderedDict([
             ('linr1', nn.Linear(256, 64)),
             ('relu1', nn.ReLU()),
