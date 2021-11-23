@@ -35,12 +35,13 @@ cfg.device = 'gpu'
 
 # Architecture
 
-cfg.enc = {'name'   : 'vaal'}
+cfg.enc = {'name'       : 'vaal'}
 
-cfg.btk = {'name'   : 'vaal',
-           'z_dim'  : 256}
+cfg.btk = {'name'       : 'vaal',
+           'z_dim'      : 256}
 
-cfg.dec = {'name'   : 'vaal'}
+cfg.dec = {'name'       : 'vaal',
+           'kld_weight' : 1}
 
 cfg.cls = {'name'   : 'vaal_with_latent'}
 
