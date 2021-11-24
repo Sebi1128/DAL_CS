@@ -1,11 +1,14 @@
+import argparse
 from torch import optim
 from src.data import ActiveDataset
 from src.model import Net
 from src.base_models.samplers import SAMPLER_DICT
 from src.training import epoch_run
 from utils import config_defaulter, ModelWriter
-from config import get_wandb_config
+#from config import get_wandb_config
+from datetime import datetime
 
+import yaml
 import wandb
 
 def main(cfg):
@@ -48,5 +51,18 @@ def main(cfg):
 
 
 if __name__ == "__main__":
-    cfg = get_wandb_config()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--config', help='path to config file', default='configs/default_config.yaml')
+    args = parser.parse_args()
+
+    with open(args.config) as file:
+        config = yaml.load(file, Loader=yaml.FullLoader)
+
+    wandb.init(config=config,
+               project="Deep Learning Project")  # , entity="active_learners")  # , mode="disabled")
+
+    cfg = wandb.config
+    run_name = datetime.now().strftime("%Y_%m_%d_%H%M")[2:] + '_' + cfg.experiment_name + '_' + wandb.run.id
+    wandb.run.name = run_name
+
     main(cfg)
