@@ -79,7 +79,7 @@ def train_epoch(model, sampler, active_data, optimizer, batch_size, device):
 
             if sampler.trainable:
                 x_unlabeled, _ = next(unlbl_iter)
-                x_unlabeled.to(device)
+                x_unlabeled = x_unlabeled.to(device)
                 r_labeled = model.latent(x)
                 r_unlabeled = model.latent(x_unlabeled)
                 sampler_in = (r_labeled, r_unlabeled)
