@@ -26,8 +26,8 @@ def main(cfg):
         model = Net(cfg).to(cfg.device)
         sampler = SAMPLER_DICT[cfg.smp['name']](cfg.smp, cfg.device).to(cfg.device)
 
-        wandb.watch(model)
-        wandb.watch(sampler)
+        wandb.watch(model, log="gradients", log_freq=1000, log_graph=(True))
+        wandb.watch(sampler, log="gradients", log_freq=1000, log_graph=(True))
 
         if sampler.trainable:
             sampler.optimizer = optim.Adam(sampler.parameters(), lr=cfg.smp['lr'])
