@@ -4,7 +4,6 @@ import torch
 
 def epoch_run(model, sampler, active_dataset, optimizer, run_no, model_writer, cfg):
     pbar = tqdm(range(cfg.n_epochs))
-    #pbar = tqdm(range(1)) # debug
     pbar.set_description("validation")
 
     acc_best_valid = -1
@@ -62,7 +61,6 @@ def train_epoch(model, sampler, active_data, optimizer, batch_size, device):
     all_iter = iter(all_DL)
 
     n_epochs = len(active_data.trainset) // batch_size
-    #n_epochs = 2 # debug
     c_losses = list()
     r_losses = list()
     se_losses = list()
@@ -107,8 +105,10 @@ def train_epoch(model, sampler, active_data, optimizer, batch_size, device):
         unlbl_iter = iter(unlbld_DL)
 
         sampler.train()
-        for sub_epoch in range(sampler.n_sub_epochs):
-            for step in range(min(len(lbl_iter), len(unlbl_iter))):
+        pbar_sub_ep = tqdm(range(sampler.n_sub_epochs), leave=False)
+        for sub_epoch in pbar_sub_ep:
+            pbar_step = tqdm(range(min(len(lbl_iter), len(unlbl_iter))), leave=False)
+            for step in pbar_step:
                 x, _ = next(lbl_iter)
                 x_unlabeled, _ = next(unlbl_iter)
                 x = x.to(device)
@@ -145,8 +145,6 @@ def validate_epoch(model, sampler, active_data, batch_size, device):
 
     c_losses = list()
     r_losses = list()
-    se_losses = list()
-    ss_losses = list()
 
     correct = 0
     total = 0
@@ -164,22 +162,9 @@ def validate_epoch(model, sampler, active_data, batch_size, device):
         loss = model.r_loss(r.flatten(), x.flatten(), *latent[1:])['loss']
         r_losses.append(loss)
 
-        if sampler.trainable:
-            sampler_in = (r_labeled, r_unlabeled)
-            sampler_out = sampler(sampler_in)
-            loss = sampler.model_loss(sampler_out)
-            se_losses.append(loss)
-
-            loss = sampler.sampler_loss(sampler_out)
-            ss_losses.append(loss)
-
-        #break # DEBUG
-
     result = {
         'classification_loss_val': torch.mean(torch.tensor(c_losses)),
         'reconstruction_loss_val': torch.mean(torch.tensor(r_losses)),
-        'sampling_embedding_loss_val': torch.mean(torch.tensor(se_losses)),
-        'sampling_sampler_loss_val': torch.mean(torch.tensor(ss_losses))
     }
 
     return result, correct / total * 100
@@ -198,8 +183,6 @@ def test_epoch(model, active_data, batch_size, device):
 
         correct += (c.argmax(1) == t).sum()
         total += len(t)
-
-        #break # debug
 
     return correct / total * 100
 

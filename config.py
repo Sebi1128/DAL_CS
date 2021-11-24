@@ -9,7 +9,7 @@ import torch
 
 def get_wandb_config():
     experiment_name = "Initial_Test"
-    wandb.init(project="Deep Learning Project") #, mode="disabled")
+    wandb.init(project="Deep Learning Project", entity="active_learners") #, mode="disabled")
     run_name = datetime.now().strftime("%Y_%m_%d_%H%M")[2:] + '_' + experiment_name + '_' + wandb.run.id
     wandb.run.name = run_name
 
@@ -28,12 +28,12 @@ def get_wandb_config():
     cfg.n_runs = 9 # should be one more than the number of sampling updates
 
     #cfg.smp = {'name': 'cal', 'n_neighs': 10, 'neigh_dist': 'kldiv'}
-    cfg.smp = {'name': 'random'}
-    #cfg.smp = {'name': 'vaal', 'latent_dim': 256, 'lr': 0.001, 'n_sub_epochs': 1}
+    #cfg.smp = {'name': 'random'}
+    cfg.smp = {'name': 'vaal', 'latent_dim': 32, 'lr': 0.001, 'n_sub_epochs': 1}
 
     # Run Hyperparameters
-    cfg.batch_size = 16     # 128
-    cfg.n_epochs = 20       # 100
+    cfg.batch_size = 128
+    cfg.n_epochs = 100
 
     cfg.optimizer = 'adam'
     cfg.learning_rate = 0.001

@@ -25,10 +25,10 @@ class Base_Bottleneck(Bottleneck):
         super(Base_Bottleneck, self).__init__(cfg_btk)
 
         # REVIEW Z should be before or ReLU or Not?
-
-        self.linr1 = nn.Linear(32 * 32 * 64, 256)
+        self.z_dim = cfg_btk['z_dim']
+        self.linr1 = nn.Linear(32 * 32 * 64, self.z_dim)
         self.relu1 = nn.ReLU()
-        self.linr2 = nn.Linear(256, 32 * 32 * 64)
+        self.linr2 = nn.Linear(self.z_dim, 32 * 32 * 64)
         self.relu2 = nn.ReLU()
 
     def forward(self, x, latent=True, output=True):
