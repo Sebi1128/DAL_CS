@@ -101,12 +101,12 @@ def train_epoch(model, sampler, active_data, optimizer, batch_size, device):
     if sampler.trainable:
         lbld_DL = active_data.get_loader('labeled', batch_size=batch_size)
         unlbld_DL = active_data.get_loader('unlabeled', batch_size=batch_size)
-        lbl_iter = iter(lbld_DL)
-        unlbl_iter = iter(unlbld_DL)
 
         sampler.train()
         pbar_sub_ep = tqdm(range(sampler.n_sub_epochs), leave=False)
         for sub_epoch in pbar_sub_ep:
+            lbl_iter = iter(lbld_DL)
+            unlbl_iter = iter(unlbld_DL)
             pbar_step = tqdm(range(min(len(lbl_iter), len(unlbl_iter))), leave=False)
             for step in pbar_step:
                 x, _ = next(lbl_iter)
