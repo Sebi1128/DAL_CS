@@ -8,10 +8,7 @@ import torch
 #           mode="disabled")
 
 def get_wandb_config():
-    experiment_name = "Initial_Test"
-    wandb.init(project="Deep Learning Project", entity="active_learners") #, mode="disabled")
-    run_name = datetime.now().strftime("%Y_%m_%d_%H%M")[2:] + '_' + experiment_name + '_' + wandb.run.id
-    wandb.run.name = run_name
+
 
 
     cfg = wandb.config
