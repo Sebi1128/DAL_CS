@@ -24,7 +24,7 @@ def main(cfg):
     for run_no in range(cfg.n_runs):
         # reinit model & sampler in every run as in VAAL
         model = Net(cfg).to(cfg.device)
-        sampler = SAMPLER_DICT[cfg.smp['name']](cfg.smp, cfg.device)
+        sampler = SAMPLER_DICT[cfg.smp['name']](cfg.smp, cfg.device).to(cfg.device)
 
         wandb.watch(model)
         wandb.watch(sampler)
@@ -59,7 +59,7 @@ if __name__ == "__main__":
         config = yaml.load(file, Loader=yaml.FullLoader)
 
     wandb.init(config=config,
-               project="Deep Learning Project")  # , entity="active_learners")  # , mode="disabled")
+               project="Deep Learning Project", entity="active_learners")  # , mode="disabled")
 
     cfg = wandb.config
     run_name = datetime.now().strftime("%Y_%m_%d_%H%M")[2:] + '_' + cfg.experiment_name + '_' + wandb.run.id

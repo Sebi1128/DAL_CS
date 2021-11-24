@@ -62,7 +62,7 @@ class CAL(BaseSampler):
 
         self.n_neighs = cfg_smp['n_neighs']
 
-        self.dist_func = lambda y_l, y_p: kl_div(y_l.detach(), y_p.detach()).sum(1)
+        self.dist_func = lambda y_l, y_p: kl_div(y_l.cpu().detach(), y_p.cpu().detach()).sum(1)
 
         if cfg_smp['neigh_dist'] == 'l2':
             self.neigh_dist_func = lambda p, A: torch.sum((p[..., 0] - A[..., 0]) ** 2, axis=1)
