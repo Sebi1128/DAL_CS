@@ -32,12 +32,12 @@ def main(cfg):
         if sampler.trainable:
             sampler.optimizer = optim.Adam(sampler.parameters(), lr=cfg.smp['lr'])
 
-        if cfg.optimizer.lower() == 'adam':
-            optimizer = optim.Adam(model.parameters(), lr=cfg.learning_rate)
-        elif cfg.optimizer.lower() == 'sgd':
-            optimizer = optim.SGD(model.parameters(), lr=cfg.learning_rate, momentum=cfg.momentum)
+        #if cfg.optimizer.lower() == 'adam':
+        #    optimizer = optim.Adam(model.parameters(), lr=cfg.learning_rate)
+        #elif cfg.optimizer.lower() == 'sgd':
+        #    optimizer = optim.SGD(model.parameters(), lr=cfg.learning_rate, momentum=cfg.momentum)
 
-        epoch_run(model, sampler, active_dataset, optimizer, run_no, model_writer, cfg)
+        epoch_run(model, sampler, active_dataset, run_no, model_writer, cfg)
 
         if run_no < (cfg.n_runs - 1):
             train2lbl_idx = sampler.sample(
@@ -59,7 +59,7 @@ if __name__ == "__main__":
         config = yaml.load(file, Loader=yaml.FullLoader)
 
     wandb.init(config=config,
-               project="Deep Learning Project", entity="active_learners")  # , mode="disabled")
+               project="Deep Learning Project", entity="active_learners", mode="disabled")
 
     cfg = wandb.config
     run_name = datetime.now().strftime("%Y_%m_%d_%H%M")[2:] + '_' + cfg.experiment_name + '_' + wandb.run.id

@@ -2,14 +2,16 @@ from tqdm import tqdm
 import wandb
 import torch
 
-def epoch_run(model, sampler, active_dataset, optimizer, run_no, model_writer, cfg):
+import torch.optim as optim
+
+def epoch_run(model, sampler, active_dataset, run_no, model_writer, cfg):
     pbar = tqdm(range(cfg.n_epochs))
     pbar.set_description("validation")
 
     acc_best_valid = -1
 
     for epoch_no in pbar:
-        train_loss = train_epoch(model, sampler, active_dataset, optimizer, batch_size=cfg.batch_size,
+        train_loss = train_epoch(model, sampler, active_dataset, batch_size=cfg.batch_size,
                                  device=cfg.device)
         valid_loss, valid_acc = validate_epoch(model, sampler, active_dataset, batch_size=cfg.batch_size,
                                                    device=cfg.device)
@@ -45,7 +47,7 @@ def epoch_run(model, sampler, active_dataset, optimizer, run_no, model_writer, c
    # print(f"Final Reconstruction Loss \t{r_best_valid_loss} with Epoch No {r_best_epoch_no} for Run {run_no}")
 
 
-def train_epoch(model, sampler, active_data, optimizer, batch_size, device):
+def train_epoch(model, sampler, active_data, batch_size, device):
 
     model.train()
     torch.set_grad_enabled(True)
@@ -66,6 +68,9 @@ def train_epoch(model, sampler, active_data, optimizer, batch_size, device):
     se_losses = list()
     ss_losses = list()
 
+    optimizer_classifier = optim.SGD(model.classifier.parameters(), lr=0.01, weight_decay=5e-4, momentum=0.9)
+    optimizer_vae = optim.Adam(list(model.encoder.parameters()) + list(model.bottleneck.parameters()) + list(model.decoder.parameters()), lr=0.0005)
+
     pbar = tqdm(iter_schedule[:n_epochs], leave=False)
     pbar.set_description("training")
     for is_labeled in pbar:
@@ -75,7 +80,11 @@ def train_epoch(model, sampler, active_data, optimizer, batch_size, device):
             t = t.to(device)
             c = model.classify(x)
             loss = model.c_loss(c, t)
-            c_losses.append(loss)
+            c_losses.append(float(loss))
+
+            optimizer_classifier.zero_grad()
+            loss.backward()
+            optimizer_classifier.step()
 
             if sampler.trainable:
                 x_unlabeled, _ = next(unlbl_iter)
@@ -84,19 +93,22 @@ def train_epoch(model, sampler, active_data, optimizer, batch_size, device):
                 r_unlabeled = model.latent(x_unlabeled)
                 sampler_in = (r_labeled, r_unlabeled)
                 sampler_out = sampler(sampler_in)
-                se_loss = sampler.model_loss(sampler_out)
-                se_losses.append(se_loss)
-                loss += se_loss
+                loss = sampler.model_loss(sampler_out)
+                se_losses.append(float(loss))
+
+                optimizer_vae.zero_grad()
+                loss.backward()
+                optimizer_vae.step()
         else:
             x, _ = next(all_iter)
             x = x.to(device)
             r, latent = model.reconstruct(x)
             loss = model.r_loss(r.flatten(), x.flatten(), *latent[1:])['loss']
-            r_losses.append(loss)
-            
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
+            r_losses.append(float(loss))
+
+            optimizer_vae.zero_grad()
+            loss.backward()
+            optimizer_vae.step()
 
     if sampler.trainable:
         lbld_DL = active_data.get_loader('labeled', batch_size=batch_size)
@@ -120,7 +132,7 @@ def train_epoch(model, sampler, active_data, optimizer, batch_size, device):
                 sampler_in = (r_labeled, r_unlabeled)
                 sampler_out = sampler(sampler_in)
                 loss = sampler.sampler_loss(sampler_out)
-                ss_losses.append(loss)
+                ss_losses.append(float(loss))
 
                 sampler.optimizer.zero_grad()
                 loss.backward()
