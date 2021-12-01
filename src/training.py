@@ -34,11 +34,11 @@ def epoch_run(model, sampler, active_dataset, run_no, model_writer, cfg):
         #    r_best_epoch_no = epoch_no
         #if c_valid_loss < c_best_valid_loss:
         #    c_best_epoch_no = epoch_no
-        if valid_acc > acc_best_valid:
-            name = f'run_{run_no:01d}_epo_{epoch_no:04d}_'
-            model_writer.write(model, 'model_'+name)
-            if sampler.trainable:
-                model_writer.write(sampler, 'sampler_' + name)
+        #if valid_acc > acc_best_valid:
+        #    name = f'run_{run_no:01d}_epo_{epoch_no:04d}_'
+        #    model_writer.write(model, 'model_'+name)
+        #    if sampler.trainable:
+        #        model_writer.write(sampler, 'sampler_' + name)
 
     test_acc = test_epoch(model, active_dataset, batch_size=cfg.batch_size, device=cfg.device)
     wandb.log({"test accuracy": test_acc, "run_no": run_no})
