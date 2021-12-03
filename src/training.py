@@ -104,8 +104,6 @@ def train_epoch(model, sampler, active_data, batch_size, device):
             loss.backward()
             model.optimizer_embedding.step()
 
-        break
-
     # sampler (discriminator) is trained separately (unlike vaal) from generator (as suggested for GAN)
     if sampler.trainable:
         lbld_DL = active_data.get_loader('labeled', batch_size=batch_size)
