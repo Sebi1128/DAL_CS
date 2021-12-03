@@ -1,15 +1,14 @@
 import argparse
-from torch import optim
 from src.data import ActiveDataset
 from src.model import Net
 from src.base_models.samplers import SAMPLER_DICT
 from src.training import epoch_run
 from utils import config_defaulter, ModelWriter
-#from config import get_wandb_config
 from datetime import datetime
 
 import yaml
 import wandb
+
 
 def main(cfg):
     cfg = config_defaulter(cfg)
@@ -26,16 +25,8 @@ def main(cfg):
         model = Net(cfg).to(cfg.device)
         sampler = SAMPLER_DICT[cfg.smp['name']](cfg.smp, cfg.device).to(cfg.device)
 
-        wandb.watch(model, log="gradients", log_freq=1000, log_graph=(True))
-        wandb.watch(sampler, log="gradients", log_freq=1000, log_graph=(True))
-
-        if sampler.trainable:
-            sampler.optimizer = optim.Adam(sampler.parameters(), lr=cfg.smp['lr'])
-
-        #if cfg.optimizer.lower() == 'adam':
-        #    optimizer = optim.Adam(model.parameters(), lr=cfg.learning_rate)
-        #elif cfg.optimizer.lower() == 'sgd':
-        #    optimizer = optim.SGD(model.parameters(), lr=cfg.learning_rate, momentum=cfg.momentum)
+        #wandb.watch(model, log="gradients", log_freq=1000, log_graph=(True))
+        #wandb.watch(sampler, log="gradients", log_freq=1000, log_graph=(True))
 
         epoch_run(model, sampler, active_dataset, run_no, model_writer, cfg)
 

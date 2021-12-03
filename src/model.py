@@ -1,6 +1,6 @@
 import torch
 from torch import nn
-#from torchsummary import summary
+import torch.optim as optim
 
 from src.base_models.encoders import ENCODER_DICT
 from src.base_models.bottlenecks import BOTTLENECK_DICT
@@ -24,6 +24,16 @@ class Net(nn.Module):
 
         self.c_loss = self.classifier.loss
         self.r_loss = self.decoder.loss
+
+        optimizers = {'adam': optim.Adam, 'sgd': optim.SGD}
+        self.optimizer_embedding = optimizers[cfg.embedding['optimizer'].lower()](
+            list(self.encoder.parameters()) + list(self.bottleneck.parameters()) + list(self.decoder.parameters()),
+            lr=cfg.embedding['lr']
+        )
+        self.optimizer_classifier = optimizers[cfg.cls['optimizer'].lower()](
+            self.classifier.parameters(),
+            lr=cfg.cls['lr']
+        )
 
     def forward(self, x, classify=True, reconstruct=True):
         # Keep for classification

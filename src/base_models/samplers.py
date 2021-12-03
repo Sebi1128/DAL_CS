@@ -27,6 +27,7 @@ class TrainableSampler(BaseSampler):
         super(TrainableSampler, self).__init__(cfg_smp, device)
         self.trainable = True
         self.n_sub_epochs = cfg_smp['n_sub_epochs']
+
         self.optimizer = None
 
     def sampler_loss(self, pred):
@@ -123,6 +124,12 @@ class VAALSampler(TrainableSampler):
         self.discriminator = Discriminator(self.cfg_smp['latent_dim'])
         self.bce_loss = nn.BCELoss()
 
+        optimizers = {'adam': optim.Adam, 'sgd': optim.SGD}
+        self.optimizer = optimizers[cfg_smp['optimizer'].lower()](
+            list(self.discriminator.parameters()),
+            lr=cfg_smp['lr']
+        )
+
     def forward(self, x):
         z_labeled = x[0]
         z_unlabeled = x[1]
@@ -215,17 +222,3 @@ def kaiming_init(m):
 
 SAMPLER_DICT = {'cal': CAL, 'random': Random, 'vaal': VAALSampler}
 
-def gaussian_kl_div_test():
-    tc = unittest.TestCase()
-    vec = torch.zeros(2)
-    tc.assertAlmostEqual(float(gaussian_kl_div(mu_p=vec, log_var_p=vec, mu_q=vec, log_var_q=vec)), 0)
-
-def gaussian_symmetric_kl_div_test():
-    tc = unittest.TestCase()
-    vec = torch.zeros(2)
-    tc.assertAlmostEqual(float(gaussian_symmetric_kl_div(mu_p=vec, log_var_p=vec, mu_q=vec, log_var_q=vec)), 0)
-
-
-if __name__ == '__main__':
-    gaussian_kl_div_test()
-    gaussian_symmetric_kl_div_test()

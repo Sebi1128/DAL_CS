@@ -2,14 +2,11 @@ from tqdm import tqdm
 import wandb
 import torch
 
-import torch.optim as optim
-
 def epoch_run(model, sampler, active_dataset, run_no, model_writer, cfg):
     pbar = tqdm(range(cfg.n_epochs))
-    pbar.set_description("validation")
+    pbar.set_description("training")
 
-    acc_best_valid = -1
-
+    #acc_best_valid = -1
     for epoch_no in pbar:
         train_loss = train_epoch(model, sampler, active_dataset, batch_size=cfg.batch_size,
                                  device=cfg.device)
@@ -44,7 +41,7 @@ def epoch_run(model, sampler, active_dataset, run_no, model_writer, cfg):
     wandb.log({"test accuracy": test_acc, "run_no": run_no})
 
     #print(f"Best Classification Loss \t{c_best_valid_loss} with Epoch No {c_best_epoch_no} for Run {run_no}")
-   # print(f"Final Reconstruction Loss \t{r_best_valid_loss} with Epoch No {r_best_epoch_no} for Run {run_no}")
+    #print(f"Final Reconstruction Loss \t{r_best_valid_loss} with Epoch No {r_best_epoch_no} for Run {run_no}")
 
 
 def train_epoch(model, sampler, active_data, batch_size, device):
@@ -68,11 +65,8 @@ def train_epoch(model, sampler, active_data, batch_size, device):
     se_losses = list()
     ss_losses = list()
 
-    optimizer_classifier = optim.SGD(model.classifier.parameters(), lr=0.01, weight_decay=5e-4, momentum=0.9)
-    optimizer_vae = optim.Adam(list(model.encoder.parameters()) + list(model.bottleneck.parameters()) + list(model.decoder.parameters()), lr=0.0005)
-
     pbar = tqdm(iter_schedule[:n_epochs], leave=False)
-    pbar.set_description("training")
+    pbar.set_description("model epoch")
     for is_labeled in pbar:
         if is_labeled:
             x, t = next(lbl_iter)
@@ -82,9 +76,9 @@ def train_epoch(model, sampler, active_data, batch_size, device):
             loss = model.c_loss(c, t)
             c_losses.append(float(loss))
 
-            optimizer_classifier.zero_grad()
+            model.optimizer_classifier.zero_grad()
             loss.backward()
-            optimizer_classifier.step()
+            model.optimizer_classifier.step()
 
             if sampler.trainable:
                 x_unlabeled, _ = next(unlbl_iter)
@@ -96,9 +90,9 @@ def train_epoch(model, sampler, active_data, batch_size, device):
                 loss = sampler.model_loss(sampler_out)
                 se_losses.append(float(loss))
 
-                optimizer_vae.zero_grad()
+                model.optimizer_embedding.zero_grad()
                 loss.backward()
-                optimizer_vae.step()
+                model.optimizer_embedding.step()
         else:
             x, _ = next(all_iter)
             x = x.to(device)
@@ -106,21 +100,25 @@ def train_epoch(model, sampler, active_data, batch_size, device):
             loss = model.r_loss(r.flatten(), x.flatten(), *latent[1:])['loss']
             r_losses.append(float(loss))
 
-            optimizer_vae.zero_grad()
+            model.optimizer_embedding.zero_grad()
             loss.backward()
-            optimizer_vae.step()
+            model.optimizer_embedding.step()
 
+        break
+
+    # sampler (discriminator) is trained separately (unlike vaal) from generator (as suggested for GAN)
     if sampler.trainable:
         lbld_DL = active_data.get_loader('labeled', batch_size=batch_size)
         unlbld_DL = active_data.get_loader('unlabeled', batch_size=batch_size)
 
         sampler.train()
         pbar_sub_ep = tqdm(range(sampler.n_sub_epochs), leave=False)
-        for sub_epoch in pbar_sub_ep:
+        for _ in pbar_sub_ep:
             lbl_iter = iter(lbld_DL)
             unlbl_iter = iter(unlbld_DL)
             pbar_step = tqdm(range(min(len(lbl_iter), len(unlbl_iter))), leave=False)
-            for step in pbar_step:
+            pbar.set_description("sampler epoch")
+            for _ in pbar_step:
                 x, _ = next(lbl_iter)
                 x_unlabeled, _ = next(unlbl_iter)
                 x = x.to(device)
