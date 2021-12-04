@@ -1,28 +1,55 @@
 import wandb
+from datetime import datetime
+import torch
 
 # Start a W&B run
-wandb.init(project='Deep Learning Project', 
-           entity="active_learners")
-cfg = wandb.config
+#wandb.init(project="Deep Learning Project",
+#           entity="active_learners",
+#           mode="disabled")
 
-# Dataset
-cfg.dataset = { 'name'              : 'cifar10',
-                'init_lbl_ratio'    : 0.1,
-                'val_ratio'         : 0.1,
-            }
+def get_wandb_config():
 
 
-# Hyperparameters 
-cfg.batch_size = 50
-cfg.n_epochs = 10
 
-cfg.optimizer = 'adam'
-cfg.learning_rate = 0.001
-cfg.n_neighs = 10
+    cfg = wandb.config
 
-# Active Learning
-cfg.update_ratio = 0.05
-cfg.n_runs = 9
+    # Seed
+    cfg.seed = 42
 
-# System
-cfg.device = 'gpu'
+    # Dataset and Active Learning
+    cfg.dataset = { 'name'              : 'cifar10',
+                    'init_lbl_ratio'    : 0.1,
+                    'val_ratio'         : 0.1,}
+
+    cfg.update_ratio = 0.05
+    cfg.n_runs = 9 # should be one more than the number of sampling updates
+
+    #cfg.smp = {'name': 'cal', 'n_neighs': 10, 'neigh_dist': 'kldiv'}
+    #cfg.smp = {'name': 'random'}
+    cfg.smp = {'name': 'vaal', 'latent_dim': 32, 'lr': 0.001, 'n_sub_epochs': 1}
+
+    # Run Hyperparameters
+    cfg.batch_size = 128
+    cfg.n_epochs = 100
+
+    cfg.optimizer = 'adam'
+    cfg.learning_rate = 0.001
+    cfg.momentum = 0.0
+
+    # System
+    cfg.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+    # Architecture
+
+    cfg.enc = {'name'   : 'vaal'}
+
+    cfg.dec = {'name'       : 'vaal',
+               'kld_weight' : 1}
+
+    cfg.btk = {'name'   : 'vaal',
+               'z_dim'  : 32}
+
+    cfg.cls = {'name'   : 'vaal_with_latent',
+               'z_dim'  : 32}
+    return cfg
+

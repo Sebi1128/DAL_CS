@@ -1,0 +1,50 @@
+experiment_name: Initial_Test
+
+seed: 42
+
+# Dataset and Active Learning
+dataset:
+  name: cifar10
+  init_lbl_ratio: 0.1
+  val_ratio: 0.1
+
+update_ratio: 0.05
+n_runs: 9 # should be one more than the number of sampling updates
+
+device: gpu
+
+#smp:
+#  name: 'cal'
+#  n_neighs: 10
+#  neigh_dist: 'kldiv'
+#smp:
+#  name: 'random'
+smp:
+  optimizer: adam
+  lr: 0.0005
+  name: vaal
+  latent_dim: 32
+  n_sub_epochs: 1
+
+# Run Hyperparameters
+batch_size: 128
+n_epochs: 100
+
+# Architecture
+embedding:
+  optimizer: adam
+  lr: 0.0005
+enc:
+  name: vaal
+dec:
+  name: vaal
+  kld_weight: 1
+btk:
+  name: vaal
+  z_dim: 32
+
+cls:
+  optimizer: sgd
+  lr: 0.01
+  name: vaal
+  z_dim: 32
