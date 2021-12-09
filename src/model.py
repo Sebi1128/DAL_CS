@@ -32,7 +32,9 @@ class Net(nn.Module):
         )
         self.optimizer_classifier = optimizers[cfg.cls['optimizer'].lower()](
             self.classifier.parameters(),
-            lr=cfg.cls['lr']
+            lr=cfg.cls['lr'],
+            weight_decay=5e-4,
+            momentum=0.9
         )
 
     def forward(self, x, classify=True, reconstruct=True):
