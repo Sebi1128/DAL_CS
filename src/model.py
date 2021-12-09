@@ -13,11 +13,11 @@ class Net(nn.Module):
         super().__init__()
 
         # x -> e
-        self.encoder = ENCODER_DICT[cfg.enc['name']](cfg.enc)
+        self.encoder = ENCODER_DICT[cfg.autoenc['name']](cfg.autoenc)
         # e -> b, z
-        self.bottleneck = BOTTLENECK_DICT[cfg.btk['name']](cfg.btk)
+        self.bottleneck = BOTTLENECK_DICT[cfg.autoenc['name']](cfg.autoenc)
         # b -> r
-        self.decoder = DECODER_DICT[cfg.dec['name']](cfg.dec)
+        self.decoder = DECODER_DICT[cfg.autoenc['name']](cfg.autoenc)
         # b -> c
         self.classifier = CLASSIFIER_DICT[cfg.cls['name']](cfg.cls)
         #summary(self.classifier, input_size=(3, 32, 32))

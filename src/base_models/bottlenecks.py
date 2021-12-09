@@ -2,6 +2,7 @@ from collections import OrderedDict
 from torch.nn import functional as F
 from torch import nn
 import torch
+import numpy
 
 
 class Bottleneck(nn.Module):
@@ -20,39 +21,9 @@ class Bottleneck(nn.Module):
         return y
 
 
-class Base_Bottleneck(Bottleneck):
+class VAE_Bottleneck(Bottleneck):
     def __init__(self, cfg_btk):
-        super(Base_Bottleneck, self).__init__(cfg_btk)
-
-        # REVIEW Z should be before or ReLU or Not?
-        self.z_dim = cfg_btk['z_dim']
-        self.linr1 = nn.Linear(32 * 32 * 64, self.z_dim)
-        self.relu1 = nn.ReLU()
-        self.linr2 = nn.Linear(self.z_dim, 32 * 32 * 64)
-        self.relu2 = nn.ReLU()
-
-    def forward(self, x, latent=True, output=True):
-
-        x = x.view(x.size(0), -1)
-        z = self.linr1(x)
-        if output:
-            x = self.relu1(z)
-            x = self.linr2(x)
-            y = self.relu2(x)
-        else:
-            y = None
-
-        return y, z
-
-
-class VAAL_Bottleneck(Bottleneck):
-    def __init__(self, cfg_btk):
-        super(VAAL_Bottleneck, self).__init__(cfg_btk)
-        self.z_dim = cfg_btk['z_dim']
-        self.fc_mu = nn.Linear(1024 * 2 * 2, self.z_dim)
-        self.fc_logvar = nn.Linear(1024 * 2 * 2, self.z_dim)
-
-        self.out = nn.Linear(self.z_dim, 1024 * 4 * 4) # VAAL uses some strange decoder
+        super(VAE_Bottleneck, self).__init__(cfg_btk)
 
     def reparameterize(self, mu, logvar):
         std = torch.exp(0.5*logvar)
@@ -62,6 +33,38 @@ class VAAL_Bottleneck(Bottleneck):
             eps.cuda()
         z = mu + (eps * std)
         return z
+
+
+class Base_Bottleneck(VAE_Bottleneck):
+    def __init__(self, cfg_btk):
+        super(Base_Bottleneck, self).__init__(cfg_btk)
+        z_dim = cfg_btk['z_dim']
+        feature_dim = numpy.prod(cfg_btk['feature_dim'])
+
+        self.fc_mu = nn.Linear(feature_dim, z_dim)
+        self.fc_logvar = nn.Linear(feature_dim, z_dim)
+
+        self.out = nn.Linear(z_dim, feature_dim)
+
+    def forward(self, x, latent=True, output=True):
+        mu, logvar = self.fc_mu(x), self.fc_logvar(x)
+        z = self.reparameterize(mu, logvar)
+        y = None
+        if output:
+            y = self.out(z)
+
+        return y, [z, mu, logvar]
+
+
+class VAAL_Bottleneck(VAE_Bottleneck):
+    def __init__(self, cfg_btk):
+        super(VAAL_Bottleneck, self).__init__(cfg_btk)
+        self.z_dim = cfg_btk['z_dim']
+        self.fc_mu = nn.Linear(1024 * 2 * 2, self.z_dim)
+        self.fc_logvar = nn.Linear(1024 * 2 * 2, self.z_dim)
+
+        # VAAL uses some strange decoder
+        self.out = nn.Linear(self.z_dim, 1024 * 4 * 4)
 
     def forward(self, x, latent=True, output=True):
         mu, logvar = self.fc_mu(x), self.fc_logvar(x)

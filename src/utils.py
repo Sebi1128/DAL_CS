@@ -12,8 +12,18 @@ transform_cifar100=transforms.Compose([
     transforms.Normalize((0.5),(0.5))
     ])
 
+transform_mnist = transforms.Compose([
+    transforms.ToTensor()
+])
+
+transform_fashion_mnist= transforms.Compose([
+    transforms.ToTensor()
+])
+
 TRANSFORMS_DICT = {
     'cifar10'   : transform_cifar10,
     'cifar100'  : transform_cifar100,
+    'mnist'     : transform_mnist,
+    'fashion_mnist' : transform_fashion_mnist
     }
 

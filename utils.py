@@ -46,15 +46,49 @@ def dataset_parametrizer(cfg):
 
     if name == 'cifar10':
 
-        cfg.enc['input_size'] = [32, 32]
-        cfg.dec['output_size'] = [32, 32]
-        cfg.cls['output_size'] = 10
+        cfg.autoenc.update({
+            'input_size': [3, 32, 32],
+            'hidden_dims': [128, 256, 512, 1024],
+            'feature_dim': [1024, 2, 2]
+        })
+        cfg.cls.update({
+            'input_size': [3, 32, 32],
+            'output_size': 10
+        })
         
     elif name == 'cifar100':
 
-        cfg.enc['input_size'] = [32, 32]
-        cfg.dec['output_size'] = [32, 32]
-        cfg.cls['output_size'] = 100
+        cfg.autoenc.update({
+            'input_size': [3, 32, 32],
+            'hidden_dims': [128, 256, 512, 1024],
+            'feature_dim': [1024, 2, 2]
+        })
+        cfg.cls.update({
+            'input_size': [3, 32, 32],
+            'output_size': 10
+        })
+
+    elif name == 'mnist':
+        cfg.autoenc.update({
+            'input_size': [1, 28, 28],
+            'hidden_dims': [128, 256],
+            'feature_dim': [256, 7, 7]
+        })
+        cfg.cls.update({
+            'input_size': [1, 28, 28],
+            'output_size': 10
+        })
+
+    elif name == 'fashion_mnist':
+        cfg.autoenc.update({
+            'input_size': [1, 28, 28],
+            'hidden_dims': [128, 256],
+            'feature_dim': [256, 7, 7]
+        })
+        cfg.cls.update({
+            'input_size': [1, 28, 28],
+            'output_size': 10
+        })
 
     return cfg
 

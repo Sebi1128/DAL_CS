@@ -35,17 +35,28 @@ class VAAL_Encoder(nn.Module):
 class Base_Encoder(nn.Module):
     def __init__(self, cfg_enc):
         super(Base_Encoder, self).__init__()
+        hidden_dims = cfg_enc['hidden_dims']
+        in_channels = cfg_enc['input_size'][0]
+        
+        layers = []
+        for dim in hidden_dims:
+            layers.append(
+                nn.Sequential(
+                    nn.Conv2d(
+                        in_channels, dim, kernel_size=4, stride=2, padding=1, bias=False
+                    ),
+                    nn.BatchNorm2d(dim),
+                    nn.ReLU(),
+                )
+            )
+            in_channels = dim
 
-        self.input_size = cfg_enc['input_size']
-        self.encoder = nn.Sequential(OrderedDict([
-            ('conv1', nn.Conv2d(3, 20, 5, padding=2)),
-            ('relu1', nn.ReLU()),
-            ('conv2', nn.Conv2d(20, 64, 5, padding=2)),
-            ('relu2', nn.ReLU()),
-        ]))
+        self.encoder = nn.Sequential(*layers)
 
     def forward(self, x):
-        return self.encoder(x)
+        x = self.encoder(x)
+        x = torch.flatten(x, 1)
+        return x
 
 
 ENCODER_DICT = {"base": Base_Encoder, "vaal": VAAL_Encoder}

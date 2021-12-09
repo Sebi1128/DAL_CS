@@ -4,7 +4,7 @@ seed: 42
 
 # Dataset and Active Learning
 dataset:
-  name: cifar10
+  name: fashion_mnist
   init_lbl_ratio: 0.1
   val_ratio: 0.1
 
@@ -35,10 +35,9 @@ momentum: 0.0
 
 # Architecture
 autoenc:
-  name: vaal
+  name: base
   z_dim: 32
   kld_weight: 1
 
 cls:
-  name: vaal_with_latent
-  z_dim: 32
+  name: mnist

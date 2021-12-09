@@ -34,16 +34,10 @@ learning_rate: 0.001
 momentum: 0.0
 
 # Architecture
-enc:
-  name: vaal
-
-dec:
-  name: vaal
-  kld_weight: 1
-
-btk:
+autoenc:
   name: vaal
   z_dim: 32
+  kld_weight: 1
 
 cls:
   name: vaal_with_latent
