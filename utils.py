@@ -6,6 +6,7 @@ import numpy as np
 import torch
 from pytorch_lightning.utilities.seed import seed_everything as light_seed
 
+
 import wandb
 
 SAVE_DIR = './save/'
@@ -83,4 +84,9 @@ class ModelWriter():
         # maybe we should save epoch no too!
         # https://pytorch.org/tutorials/beginner/saving_loading_models.html
         torch.save(model.state_dict(), self.dir + prefix + 'weights.pth')
+
+    def load(self, model, prefix=''):
+        # https://pytorch.org/tutorials/beginner/saving_loading_models.html
+        model.load_state_dict(torch.load(prefix + 'weights.pth'))
+        return model
         
