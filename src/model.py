@@ -62,14 +62,15 @@ class Net(nn.Module):
 
     def latent(self, x):
         latent, _, _ = self.forward(x, classify=False, reconstruct=False)
-        return latent[0]
+        z = latent[0]
+        return z
 
-    def latent_full(self, x):
-        """ returns latent mean and log var"""
+    def latent_param(self, x):
         latent, _, _ = self.forward(x, classify=False, reconstruct=False)
         mu = latent[1]
         logvar = latent[2]
-        return torch.stack((mu, logvar), -1)
+        return torch.stack([mu, logvar], -1)
+
 
     def reconstruct(self, x):
         latent, r, _ = self.forward(x, classify=False)

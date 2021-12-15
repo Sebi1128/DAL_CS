@@ -86,13 +86,13 @@ class CAL(BaseSampler):
 
         for x, _ in labeled_data:
             x = x.to(self.dev)
-            z = model.latent_full(x)
+            z = model.latent_param(x)
             z_lab.append(z)
             p = model.classify(x)
             p_lab.append(p)
         for x, _ in unlabeled_data:
             x = x.to(self.dev)
-            z = model.latent_full(x)
+            z = model.latent_param(x)
             z_unlab.append(z)
             p = model.classify(x)
             p_unlab.append(p)
@@ -166,8 +166,8 @@ class VAALSampler(TrainableSampler):
         for i, xt_p in enumerate(pbar):
             x = xt_p[0]
             x = x.to(self.dev)
-            z = model.latent(x.unsqueeze(0))
-            d = self.discriminator(z)
+            mu = model.latent_param(x.unsqueeze(0))[..., 0]
+            d = self.discriminator(mu)
             all_preds.append(d)
 
         all_preds = torch.stack(all_preds).squeeze()
