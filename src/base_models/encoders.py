@@ -2,6 +2,7 @@ from collections import OrderedDict
 from torch.nn import functional as F
 from torch import nn
 import torch
+from .model_utils import kaiming_init
 from torch.nn.modules.batchnorm import BatchNorm2d
 
 
@@ -25,6 +26,7 @@ class VAAL_Encoder(nn.Module):
             in_channels = dim
 
         self.encoder = nn.Sequential(*layers)
+        kaiming_init(self)
 
     def forward(self, x):
         x = self.encoder(x)

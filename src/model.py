@@ -46,10 +46,10 @@ class Net(nn.Module):
 
         # Bottleneck
         x, latent = self.bottleneck(x)
-        z = latent[0]
+        mu = latent[1]
 
         if classify: # Classification
-            c = self.classifier(x_save, z, x)
+            c = self.classifier(x_save, mu, x)
         else:
             c = None
 

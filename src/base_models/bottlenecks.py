@@ -2,6 +2,7 @@ from collections import OrderedDict
 from torch.nn import functional as F
 from torch import nn
 import torch
+from .model_utils import kaiming_init
 
 
 class Bottleneck(nn.Module):
@@ -53,10 +54,11 @@ class VAAL_Bottleneck(Bottleneck):
         self.fc_logvar = nn.Linear(1024 * 2 * 2, self.z_dim)
 
         self.out = nn.Linear(self.z_dim, 1024 * 4 * 4) # VAAL uses some strange decoder
+        kaiming_init(self)
 
     def reparameterize(self, mu, logvar):
         std = torch.exp(0.5*logvar)
-        eps = torch.rand_like(std)
+        eps = torch.randn(*mu.size())
         if mu.is_cuda:
             std.cuda()
             eps.cuda()

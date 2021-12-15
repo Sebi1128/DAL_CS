@@ -4,6 +4,7 @@ from torch import nn
 import torch
 from functools import partial
 from pytorch_lightning.core.lightning import LightningModule
+from .model_utils import kaiming_init
 
 
 class Base_Decoder(nn.Module):
@@ -65,6 +66,7 @@ class VAAL_Decoder(nn.Module):
 
         self.decoder = nn.Sequential(*layers)
         self.loss = partial(vae_loss, kld_weight=self.kld_weight)
+        kaiming_init(self)
 
     def forward(self, x):
         x = x.view(-1, 1024, 4, 4)

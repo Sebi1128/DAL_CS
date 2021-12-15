@@ -6,6 +6,7 @@ import torch
 from tqdm import tqdm
 import unittest
 from torch import optim
+from .model_utils import kaiming_init
 
 
 class BaseSampler(nn.Module):
@@ -194,30 +195,10 @@ class Discriminator(nn.Module):
             nn.Linear(512, 1),
             nn.Sigmoid()
         )
-        self.weight_init()
-
-    def weight_init(self):
-        for block in self._modules:
-            for m in self._modules[block]:
-                kaiming_init(m)
+        kaiming_init(self)
 
     def forward(self, z):
         return self.net(z)
-
-
-import torch.nn.init as init
-
-
-def kaiming_init(m):
-    """Taken from https://github.com/sinhasam/vaal by Samarth Sinha et al."""
-    if isinstance(m, (nn.Linear, nn.Conv2d)):
-        init.kaiming_normal_(m.weight)
-        if m.bias is not None:
-            m.bias.data.fill_(0)
-    elif isinstance(m, (nn.BatchNorm1d, nn.BatchNorm2d)):
-        m.weight.data.fill_(1)
-        if m.bias is not None:
-            m.bias.data.fill_(0)
 
 
 SAMPLER_DICT = {'cal': CAL, 'random': Random, 'vaal': VAALSampler}
