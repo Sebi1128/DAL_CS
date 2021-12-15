@@ -60,8 +60,8 @@ class VAAL_Bottleneck(Bottleneck):
         std = torch.exp(0.5*logvar)
         eps = torch.randn(*mu.size())
         if mu.is_cuda:
-            std.cuda()
-            eps.cuda()
+            std = std.cuda()
+            eps = eps.cuda()
         z = mu + (eps * std)
         return z
 
