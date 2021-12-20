@@ -4,14 +4,14 @@ seed: 42
 
 # Dataset and Active Learning
 dataset:
-  name: cifar10
+  name: fashion_mnist
   init_lbl_ratio: 0.1
   val_ratio: 0.1
 
 update_ratio: 0.05
 n_runs: 9 # should be one more than the number of sampling updates
 
-device: gpu
+device: cuda
 
 #smp:
 #  name: 'cal'

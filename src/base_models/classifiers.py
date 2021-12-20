@@ -23,7 +23,7 @@ class Classifier_VAAL(nn.Module):
         self.cfg_cls = cfg_cls
         self.output_size =  self.cfg_cls['output_size']
         # Make CNN layers of VGG16 with batch normalization
-        self.features = make_layers(cfgs['D'], batch_norm=True)
+        self.features = make_layers(cfgs['D'], cfg_cls['input_size'][0], batch_norm=True)
         self.avgpool = nn.AdaptiveAvgPool2d((7, 7))
 
         if self.cfg_cls['name'] == 'vaal_with_latent':
@@ -80,9 +80,8 @@ class Classifier_VAAL(nn.Module):
                 nn.init.constant_(m.bias, 0)
 
 
-def make_layers(cfg_layer, batch_norm=False):
+def make_layers(cfg_layer, in_channels, batch_norm=False):
     layers = []
-    in_channels = 3
     for v in cfg_layer:
         if v == 'M':
             layers += [nn.MaxPool2d(kernel_size=2, stride=2)]

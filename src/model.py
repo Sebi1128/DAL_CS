@@ -31,6 +31,7 @@ class Net(nn.Module):
 
         # Encoder
         x = self.encoder(x)
+        x = torch.flatten(x, 1)
 
         # Bottleneck
         x, latent = self.bottleneck(x)

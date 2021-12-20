@@ -13,10 +13,12 @@ transform_cifar100=transforms.Compose([
     ])
 
 transform_mnist = transforms.Compose([
+    transforms.Resize((32, 32)),
     transforms.ToTensor()
 ])
 
 transform_fashion_mnist= transforms.Compose([
+    transforms.Resize((32, 32), ),
     transforms.ToTensor()
 ])
 

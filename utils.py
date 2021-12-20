@@ -6,6 +6,12 @@ import numpy as np
 import torch
 from pytorch_lightning.utilities.seed import seed_everything as light_seed
 
+from src.base_models.encoders import ENCODER_DICT
+from src.base_models.bottlenecks import BOTTLENECK_DICT
+from src.base_models.decoders import DECODER_DICT
+from src.base_models.classifiers import CLASSIFIER_DICT
+from src.data import ActiveDataset
+
 import wandb
 
 SAVE_DIR = './save/'
@@ -18,15 +24,15 @@ def config_defaulter(cfg):
     cfg.update({}, allow_val_change=True) 
 
     
-    cfg = get_device(cfg)
-    cfg = dataset_parametrizer(cfg)
+    cfg = set_device(cfg)
+    cfg = dimension_parametrizer(cfg)
 
     seed_everything(cfg.seed)
     
     return cfg
 
 
-def get_device(cfg, verbose=True):
+def set_device(cfg, verbose=True):
 
     if cfg.device.lower() in ['gpu', 'cuda']:
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -40,56 +46,71 @@ def get_device(cfg, verbose=True):
 
     return cfg
 
-def dataset_parametrizer(cfg):
+def dimension_parametrizer(cfg):
 
-    name = cfg.dataset['name']
+    dataset_name    = cfg.dataset['name']
+    model_name      = cfg.autoenc['name']
 
-    if name == 'cifar10':
+    # hidden dimensions defined by model
+    if model_name == 'base':
+        hidden_dims = [128, 256]
 
-        cfg.autoenc.update({
-            'input_size': [3, 32, 32],
-            'hidden_dims': [128, 256, 512, 1024],
-            'feature_dim': [1024, 2, 2]
-        })
-        cfg.cls.update({
-            'input_size': [3, 32, 32],
-            'output_size': 10
-        })
+    elif model_name == 'vaal':
+        hidden_dims = [128, 256, 512, 1024]
+
+    # input/output dimensions defined by dataset
+    if dataset_name == 'cifar10':
+
+        input_size = [3, 32, 32]
+        output_size = 10
         
-    elif name == 'cifar100':
+    elif dataset_name == 'cifar100':
 
-        cfg.autoenc.update({
-            'input_size': [3, 32, 32],
-            'hidden_dims': [128, 256, 512, 1024],
-            'feature_dim': [1024, 2, 2]
-        })
-        cfg.cls.update({
-            'input_size': [3, 32, 32],
-            'output_size': 10
-        })
+        input_size = [3, 32, 32]
+        output_size = 100
 
-    elif name == 'mnist':
-        cfg.autoenc.update({
-            'input_size': [1, 28, 28],
-            'hidden_dims': [128, 256],
-            'feature_dim': [256, 7, 7]
-        })
-        cfg.cls.update({
-            'input_size': [1, 28, 28],
-            'output_size': 10
-        })
+    elif dataset_name == 'mnist':
 
-    elif name == 'fashion_mnist':
-        cfg.autoenc.update({
-            'input_size': [1, 28, 28],
-            'hidden_dims': [128, 256],
-            'feature_dim': [256, 7, 7]
-        })
-        cfg.cls.update({
-            'input_size': [1, 28, 28],
-            'output_size': 10
-        })
+        input_size  = [1, 32, 32]
+        output_size = 10
 
+    elif dataset_name == 'fashion_mnist':
+
+        input_size  = [1, 32, 32]
+        output_size = 10
+
+    cfg = set_dataset_dimensions(cfg, input_size, output_size, hidden_dims)
+    
+    return cfg
+
+def set_dataset_dimensions(cfg, input_size, output_size, hidden_dims):
+
+    cfg.autoenc.update({
+        'input_size'    : input_size,
+        'hidden_dims'   : hidden_dims
+    })
+    cfg.cls.update({
+        'input_size': input_size,
+        'output_size': output_size
+    })
+
+    active_dataset = ActiveDataset(cfg.dataset['name'], 
+                               init_lbl_ratio=cfg.dataset['init_lbl_ratio'],
+                               val_ratio=cfg.dataset['val_ratio'])
+
+    dummy_data_loader = active_dataset.get_loader('train', batch_size=cfg.batch_size)
+
+    encoder = ENCODER_DICT[cfg.autoenc['name']](cfg.autoenc)
+    for (x, t) in dummy_data_loader:
+
+        t = encoder(x)
+
+        break
+
+    cfg.autoenc.update({
+            'feature_dim': list(t.size())[1:]
+        })
+    
     return cfg
 
 def seed_everything(seed: int):
@@ -105,7 +126,6 @@ def seed_everything(seed: int):
 
     print(f"Seed has been set to {seed}...")
 
-    
 class ModelWriter():
     def __init__(self, cfg):
         self.name = wandb.run.name

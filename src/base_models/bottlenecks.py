@@ -2,7 +2,7 @@ from collections import OrderedDict
 from torch.nn import functional as F
 from torch import nn
 import torch
-import numpy
+import numpy as np
 
 
 class Bottleneck(nn.Module):
@@ -39,12 +39,12 @@ class Base_Bottleneck(VAE_Bottleneck):
     def __init__(self, cfg_btk):
         super(Base_Bottleneck, self).__init__(cfg_btk)
         z_dim = cfg_btk['z_dim']
-        feature_dim = numpy.prod(cfg_btk['feature_dim'])
+        feature_size = np.prod(cfg_btk['feature_dim'])
 
-        self.fc_mu = nn.Linear(feature_dim, z_dim)
-        self.fc_logvar = nn.Linear(feature_dim, z_dim)
+        self.fc_mu = nn.Linear(feature_size, z_dim)
+        self.fc_logvar = nn.Linear(feature_size, z_dim)
 
-        self.out = nn.Linear(z_dim, feature_dim)
+        self.out = nn.Linear(z_dim, feature_size)
 
     def forward(self, x, latent=True, output=True):
         mu, logvar = self.fc_mu(x), self.fc_logvar(x)
@@ -59,12 +59,13 @@ class Base_Bottleneck(VAE_Bottleneck):
 class VAAL_Bottleneck(VAE_Bottleneck):
     def __init__(self, cfg_btk):
         super(VAAL_Bottleneck, self).__init__(cfg_btk)
+        feature_size = np.prod(cfg_btk['feature_dim'])
         self.z_dim = cfg_btk['z_dim']
-        self.fc_mu = nn.Linear(1024 * 2 * 2, self.z_dim)
-        self.fc_logvar = nn.Linear(1024 * 2 * 2, self.z_dim)
+        self.fc_mu = nn.Linear(feature_size, self.z_dim)
+        self.fc_logvar = nn.Linear(feature_size, self.z_dim)
 
         # VAAL uses some strange decoder
-        self.out = nn.Linear(self.z_dim, 1024 * 4 * 4)
+        self.out = nn.Linear(self.z_dim, feature_size)
 
     def forward(self, x, latent=True, output=True):
         mu, logvar = self.fc_mu(x), self.fc_logvar(x)

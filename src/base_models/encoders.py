@@ -9,10 +9,10 @@ class VAAL_Encoder(nn.Module):
     def __init__(self, cfg_enc):
         super(VAAL_Encoder, self).__init__()
 
-        hidden_dims = [128, 256, 512, 1024]
-        in_channels = 3
+        hidden_dims = cfg_enc['hidden_dims']
+        in_channels = cfg_enc['input_size'][0]
         layers = []
-        for dim in hidden_dims:
+        for i, dim in enumerate(hidden_dims):
             layers.append(
                 nn.Sequential(
                     nn.Conv2d(
@@ -28,7 +28,7 @@ class VAAL_Encoder(nn.Module):
 
     def forward(self, x):
         x = self.encoder(x)
-        x = torch.flatten(x, 1)
+        #x = torch.flatten(x, 1)
         return x
 
 
@@ -55,7 +55,7 @@ class Base_Encoder(nn.Module):
 
     def forward(self, x):
         x = self.encoder(x)
-        x = torch.flatten(x, 1)
+        #x = torch.flatten(x, 1)
         return x
 
 

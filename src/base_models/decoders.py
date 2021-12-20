@@ -1,4 +1,6 @@
 from collections import OrderedDict
+import math
+
 from torch.nn import functional as F
 from torch import nn
 import torch
@@ -38,7 +40,7 @@ class Base_Decoder(nn.Module):
                 nn.ConvTranspose2d(
                     hidden_dims[-1],
                     out_channels,
-                    kernel_size=4,
+                    kernel_size=3,
                     stride=2,
                     padding=1
                 )
@@ -60,9 +62,12 @@ class VAAL_Decoder(nn.Module):
         super(VAAL_Decoder, self).__init__()
         self.kld_weight = cfg_dec['kld_weight']
 
-        image_size = 32*32
-        hidden_dims = [1024, 512, 256, 128]
-        out_channels = 3
+        image_size = math.prod(cfg_dec['input_size'][1:])
+        hidden_dims = cfg_dec['hidden_dims'][::-1]
+        out_channels = cfg_dec['input_size'][0]
+
+        self.feature_dim = cfg_dec['feature_dim']
+        
         layers = []
         for i in range(len(hidden_dims) - 1):
             layers.append(
@@ -85,7 +90,8 @@ class VAAL_Decoder(nn.Module):
                 nn.ConvTranspose2d(
                     hidden_dims[-1],
                     out_channels,
-                    kernel_size=1
+                    kernel_size=2,
+                    stride=2,
                 )
             )
         )
@@ -94,9 +100,10 @@ class VAAL_Decoder(nn.Module):
         self.loss = partial(vae_loss, kld_weight=self.kld_weight, image_size=image_size)
 
     def forward(self, x):
-        x = x.view(-1, 1024, 4, 4)
+        x = x.view(-1, *self.feature_dim)
         x = self.decoder(x)
-        x = torch.sigmoid(x)
+        x = torch.sigmoid(x) 
+        #REVIEW Why?
         return x
 
 
@@ -110,7 +117,7 @@ def vae_loss(recon, x, *args, **kwargs):
     logvar = args[1]
     kld_weight = kwargs.get('kld_weight', 1)
     spatial_size = kwargs['image_size']
-    recon_loss = F.binary_cross_entropy(recon.view(-1, spatial_size), x.view(-1, spatial_size), reduction='sum')
+    recon_loss = F.binary_cross_entropy(recon.view(-1, spatial_size), x.view(-1, spatial_size), reduction='mean')
     kld_loss = torch.mean(-0.5 * torch.sum(1 + logvar -
                           mu ** 2 - logvar.exp(), dim=1), dim=0)
     loss = recon_loss + kld_weight * kld_loss

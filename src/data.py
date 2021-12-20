@@ -5,7 +5,7 @@ from torchvision.datasets import CIFAR10, CIFAR100, MNIST, FashionMNIST
 from torch.utils.data import DataLoader, Subset
 import torch
 
-from src.utils import TRANSFORMS_DICT
+from src.transformation import TRANSFORMS_DICT
 
 DATASETS_DICT = {
 	'cifar10'	: CIFAR10,

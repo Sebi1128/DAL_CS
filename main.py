@@ -52,7 +52,7 @@ def main(cfg):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config', help='path to config file', default='configs/default_config.yaml')
+    parser.add_argument('--config', help='path to config file', default='configs/vaal_sampling_mnist_config.yaml')
     args = parser.parse_args()
 
     with open(args.config) as file:

@@ -11,7 +11,7 @@ dataset:
 update_ratio: 0.05
 n_runs: 9 # should be one more than the number of sampling updates
 
-device: cpu
+device: cuda
 
 #smp:
 #  name: 'cal'
