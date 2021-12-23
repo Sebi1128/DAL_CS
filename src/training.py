@@ -8,10 +8,22 @@ def epoch_run(model, sampler, active_dataset, run_no, model_writer, cfg):
 
     #acc_best_valid = -1
     for epoch_no in pbar:
-        train_loss = train_epoch(model, sampler, active_dataset, batch_size=cfg.batch_size,
-                                 device=cfg.device)
-        valid_loss, valid_acc = validate_epoch(model, sampler, active_dataset, batch_size=cfg.batch_size,
-                                                   device=cfg.device)
+        train_loss = train_epoch(
+            model,
+            sampler,
+            active_dataset,
+            batch_size=cfg.batch_size,
+            device=cfg.device,
+            train_vae=cfg.embedding['train_vae']
+        )
+        valid_loss, valid_acc = validate_epoch(
+            model,
+            sampler,
+            active_dataset,
+            batch_size=cfg.batch_size,
+            device=cfg.device,
+            train_vae=cfg.embedding['train_vae']
+        )
 
         info_text = f"{run_no+1}|C|R|SE|SS Train:|" + '|'.join([f"{val:.5f}" for val in train_loss.values()]) + '|'
         info_text += f"  Valid:|" + '|'.join([f"{val:.5f}" for val in valid_loss.values()]) + '|'
@@ -44,7 +56,7 @@ def epoch_run(model, sampler, active_dataset, run_no, model_writer, cfg):
     #print(f"Final Reconstruction Loss \t{r_best_valid_loss} with Epoch No {r_best_epoch_no} for Run {run_no}")
 
 
-def train_epoch(model, sampler, active_data, batch_size, device):
+def train_epoch(model, sampler, active_data, batch_size, device, train_vae=True):
 
     model.train()
     torch.set_grad_enabled(True)
@@ -80,29 +92,31 @@ def train_epoch(model, sampler, active_data, batch_size, device):
             loss.backward()
             model.optimizer_classifier.step()
 
-            if sampler.trainable:
-                x_unlabeled, _ = next(unlbl_iter)
-                x_unlabeled = x_unlabeled.to(device)
-                mu_labeled = model.latent_param(x_unlabeled)[..., 0]
-                mu_unlabeled = model.latent_param(x_unlabeled)[..., 0]
-                sampler_in = (mu_labeled, mu_unlabeled)
-                sampler_out = sampler(sampler_in)
-                loss = sampler.model_loss(sampler_out)
-                se_losses.append(float(loss))
+            if train_vae:
+                if sampler.trainable:
+                    x_unlabeled, _ = next(unlbl_iter)
+                    x_unlabeled = x_unlabeled.to(device)
+                    mu_labeled = model.latent_param(x_unlabeled)[..., 0]
+                    mu_unlabeled = model.latent_param(x_unlabeled)[..., 0]
+                    sampler_in = (mu_labeled, mu_unlabeled)
+                    sampler_out = sampler(sampler_in)
+                    loss = sampler.model_loss(sampler_out)
+                    se_losses.append(float(loss))
+
+                    model.optimizer_embedding.zero_grad()
+                    loss.backward()
+                    model.optimizer_embedding.step()
+        else:
+            if train_vae:
+                x, _ = next(all_iter)
+                x = x.to(device)
+                r, latent = model.reconstruct(x)
+                loss = model.r_loss(r.flatten(), x.flatten(), *latent[1:])['loss']
+                r_losses.append(float(loss))
 
                 model.optimizer_embedding.zero_grad()
                 loss.backward()
                 model.optimizer_embedding.step()
-        else:
-            x, _ = next(all_iter)
-            x = x.to(device)
-            r, latent = model.reconstruct(x)
-            loss = model.r_loss(r.flatten(), x.flatten(), *latent[1:])['loss']
-            r_losses.append(float(loss))
-
-            model.optimizer_embedding.zero_grad()
-            loss.backward()
-            model.optimizer_embedding.step()
 
     # sampler (discriminator) is trained separately (unlike vaal) from generator (as suggested for GAN)
     if sampler.trainable:
@@ -144,7 +158,7 @@ def train_epoch(model, sampler, active_data, batch_size, device):
     return result
 
         
-def validate_epoch(model, sampler, active_data, batch_size, device):
+def validate_epoch(model, sampler, active_data, batch_size, device, train_vae=True):
 
     model.eval()
     torch.set_grad_enabled(False)
@@ -166,9 +180,10 @@ def validate_epoch(model, sampler, active_data, batch_size, device):
         correct += (c.argmax(1) == t).sum()
         total += len(t)
 
-        r, latent = model.reconstruct(x)
-        loss = model.r_loss(r.flatten(), x.flatten(), *latent[1:])['loss']
-        r_losses.append(loss)
+        if train_vae:
+            r, latent = model.reconstruct(x)
+            loss = model.r_loss(r.flatten(), x.flatten(), *latent[1:])['loss']
+            r_losses.append(loss)
 
     result = {
         'classification_loss_val': torch.mean(torch.tensor(c_losses)),

@@ -32,6 +32,8 @@ n_epochs: 100
 
 # Architecture
 embedding:
+  use_off_the_shelf_vae: true # if set to true -> set train_vae to false and z_dim in cls to 256 !!!! Also do not use VAAL sampler
+  train_vae: false
   optimizer: adam
   lr: 0.0005
 enc:
@@ -46,5 +48,5 @@ btk:
 cls:
   optimizer: sgd
   lr: 0.01
-  name: vaal
-  z_dim: 32
+  name: vaal_with_latent
+  z_dim: 256

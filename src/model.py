@@ -1,6 +1,7 @@
 import torch
 from torch import nn
 import torch.optim as optim
+from src.base_models.vae_wrapper import VAEWrapper
 
 from src.base_models.encoders import ENCODER_DICT
 from src.base_models.bottlenecks import BOTTLENECK_DICT
@@ -11,14 +12,22 @@ from src.base_models.samplers import SAMPLER_DICT
 class Net(nn.Module):
     def __init__(self, cfg):
         super().__init__()
-
-        # x -> e
-        self.encoder = ENCODER_DICT[cfg.enc['name']](cfg.enc)
-        # e -> b, z
-        self.bottleneck = BOTTLENECK_DICT[cfg.btk['name']](cfg.btk)
-        # b -> r
-        self.decoder = DECODER_DICT[cfg.dec['name']](cfg.dec)
-        # b -> c
+        self.use_off_the_shelf_vae = cfg.embedding['use_off_the_shelf_vae']
+        if self.use_off_the_shelf_vae:
+            vae = VAEWrapper(cfg)
+            self.encoder = vae.get_encoder()
+            # e -> b, z
+            self.bottleneck = vae.get_bottleneck()
+            # b -> r
+            self.decoder = vae.get_decoder()
+        else:
+            # x -> e
+            self.encoder = ENCODER_DICT[cfg.enc['name']](cfg.enc)
+            # e -> b, z
+            self.bottleneck = BOTTLENECK_DICT[cfg.btk['name']](cfg.btk)
+            # b -> r
+            self.decoder = DECODER_DICT[cfg.dec['name']](cfg.dec)
+            # b -> c
         self.classifier = CLASSIFIER_DICT[cfg.cls['name']](cfg.cls)
         #summary(self.classifier, input_size=(3, 32, 32))
 
@@ -54,7 +63,7 @@ class Net(nn.Module):
             c = None
 
         if reconstruct: # Reconstruction
-            r = self.decoder(x) 
+            r = self.decoder(x)
         else:
             r = None
 
