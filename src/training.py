@@ -83,9 +83,9 @@ def train_epoch(model, sampler, active_data, batch_size, device):
             if sampler.trainable:
                 x_unlabeled, _ = next(unlbl_iter)
                 x_unlabeled = x_unlabeled.to(device)
-                r_labeled = model.latent(x)
-                r_unlabeled = model.latent(x_unlabeled)
-                sampler_in = (r_labeled, r_unlabeled)
+                mu_labeled = model.latent_param(x_unlabeled)[..., 0]
+                mu_unlabeled = model.latent_param(x_unlabeled)[..., 0]
+                sampler_in = (mu_labeled, mu_unlabeled)
                 sampler_out = sampler(sampler_in)
                 loss = sampler.model_loss(sampler_out)
                 se_losses.append(float(loss))
@@ -117,15 +117,15 @@ def train_epoch(model, sampler, active_data, batch_size, device):
             pbar_step = tqdm(range(min(len(lbl_iter), len(unlbl_iter))), leave=False)
             pbar.set_description("sampler epoch")
             for _ in pbar_step:
-                x, _ = next(lbl_iter)
+                x_labeled, _ = next(lbl_iter)
                 x_unlabeled, _ = next(unlbl_iter)
-                x = x.to(device)
+                x_labeled = x_labeled.to(device)
                 x_unlabeled = x_unlabeled.to(device)
 
-                r_labeled = model.latent(x)
-                r_unlabeled = model.latent(x_unlabeled)
+                mu_labeled = model.latent_param(x_labeled)[..., 0]
+                mu_unlabeled = model.latent_param(x_unlabeled)[..., 0]
 
-                sampler_in = (r_labeled, r_unlabeled)
+                sampler_in = (mu_labeled, mu_unlabeled)
                 sampler_out = sampler(sampler_in)
                 loss = sampler.sampler_loss(sampler_out)
                 ss_losses.append(float(loss))
