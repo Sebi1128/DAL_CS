@@ -7,6 +7,7 @@ from tqdm import tqdm
 import unittest
 from torch import optim
 from .model_utils import kaiming_init
+from torch.nn.functional import normalize
 
 
 class BaseSampler(nn.Module):
@@ -14,7 +15,7 @@ class BaseSampler(nn.Module):
         super(BaseSampler, self).__init__()
         self.cfg_smp = cfg_smp
         self.dev = device
-        self.batch_size = 10
+        self.batch_size = 20 # not to confuse with #neighbors and #classes
         self.trainable = False
 
     def sample(self, active_data, acq_size, model):
@@ -98,9 +99,9 @@ class CAL(BaseSampler):
             p_unlab.append(p)
 
         z_lab = torch.cat(z_lab)
-        p_lab = torch.exp(torch.cat(p_lab))
+        p_lab = normalize(torch.exp(torch.cat(p_lab)), p=1)
         z_unlab = torch.cat(z_unlab)
-        p_unlab = torch.exp(torch.cat(p_unlab))
+        p_unlab = normalize(torch.exp(torch.cat(p_unlab)), p=1)
 
         score = torch.zeros((len(p_unlab)))
 
