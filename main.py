@@ -43,14 +43,14 @@ def main(cfg):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config', help='path to config file', default='configs/default_config.yaml')
+    parser.add_argument('--config', help='path to config file', default='configs/cal_sampling_config.yaml')
     args = parser.parse_args()
 
     with open(args.config) as file:
         config = yaml.load(file, Loader=yaml.FullLoader)
 
     wandb.init(config=config,
-               project="Deep Learning Project", entity="active_learners", mode="disabled")
+               project="Deep Learning Project", entity="active_learners")
 
     cfg = wandb.config
     run_name = datetime.now().strftime("%Y_%m_%d_%H%M")[2:] + '_' + cfg.experiment_name + '_' + wandb.run.id

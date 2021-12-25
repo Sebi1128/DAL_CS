@@ -87,6 +87,6 @@ class ModelWriter():
 
     def load(self, model, prefix=''):
         # https://pytorch.org/tutorials/beginner/saving_loading_models.html
-        model.load_state_dict(torch.load(prefix + 'weights.pth'))
+        model.load_state_dict(torch.load(self.dir + prefix + 'weights.pth'))
         return model
         

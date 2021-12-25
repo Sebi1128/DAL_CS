@@ -1,12 +1,14 @@
 from tqdm import tqdm
 import wandb
 import torch
+from copy import deepcopy
 
 def epoch_run(model, sampler, active_dataset, run_no, model_writer, cfg):
     pbar = tqdm(range(cfg.n_epochs))
     pbar.set_description("training")
 
-    #acc_best_valid = -1
+    acc_best_valid = -1
+    loss_best_valid = 1e10
     for epoch_no in pbar:
         train_loss = train_epoch(
             model,
@@ -43,18 +45,23 @@ def epoch_run(model, sampler, active_dataset, run_no, model_writer, cfg):
         wandb.log(wandb_data)
 
         # No need for evaluating this, we can observe it on wandb
-        #if r_valid_loss < r_best_valid_loss:
-        #    r_best_epoch_no = epoch_no
-        #if c_valid_loss < c_best_valid_loss:
-        #    c_best_epoch_no = epoch_no
-        #if valid_acc > acc_best_valid:
-        #    name = f'run_{run_no:01d}_epo_{epoch_no:04d}_'
-        #    model_writer.write(model, 'model_'+name)
-        #    if sampler.trainable:
-        #        model_writer.write(sampler, 'sampler_' + name)
+        if valid_acc > acc_best_valid:
+            model_writer.write(model, 'best_acc_')
+            #if sampler.trainable:
+            #    model_writer.write(sampler, 'sampler_' + name)
+            acc_best_valid = valid_acc
 
-    test_acc = test_epoch(model, active_dataset, batch_size=cfg.batch_size, device=cfg.device)
-    wandb.log({"test_accuracy": test_acc, "run_no": run_no})
+        if valid_loss['classification_loss_val'] < loss_best_valid:
+            model_writer.write(model, 'best_loss_')
+            loss_best_valid = valid_loss['classification_loss_val']
+
+    test_acc_last_epoch = test_epoch(model, active_dataset, batch_size=cfg.batch_size, device=cfg.device, model_writer=model_writer)
+    test_acc_best_acc = test_epoch(model, active_dataset, batch_size=cfg.batch_size, device=cfg.device, model_writer=model_writer, load_prefix='best_acc_')
+    test_acc_best_loss = test_epoch(model, active_dataset, batch_size=cfg.batch_size, device=cfg.device, model_writer=model_writer, load_prefix='best_loss_')
+    wandb.log({ "test_acc_last_epoch"   : test_acc_last_epoch, 
+                "test_acc_best_acc"     : test_acc_best_acc,
+                "test_acc_best_loss"    : test_acc_best_loss,
+                "run_no": run_no})
 
     #print(f"Best Classification Loss \t{c_best_valid_loss} with Epoch No {c_best_epoch_no} for Run {run_no}")
     #print(f"Final Reconstruction Loss \t{r_best_valid_loss} with Epoch No {r_best_epoch_no} for Run {run_no}")
@@ -197,9 +204,14 @@ def validate_epoch(model, sampler, active_data, batch_size, device, train_vae=Tr
     return result, correct / total * 100
 
 
-def test_epoch(model, active_data, batch_size, device):
+def test_epoch(model_actual, active_data, batch_size, device, model_writer, load_prefix=None):
     test_DL = active_data.get_loader('test', batch_size=batch_size)
 
+    model = deepcopy(model_actual)
+
+    if load_prefix is not None:
+        model_writer.load(model, prefix=load_prefix)
+    
     correct = 0
     total = 0
 
