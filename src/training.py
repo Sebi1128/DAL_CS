@@ -34,9 +34,13 @@ def epoch_run(model, sampler, active_dataset, run_no, model_writer, cfg):
         train_loss['run_no'] = run_no
         valid_loss['epoch'] = epoch_no
         valid_loss['run_no'] = run_no
-        wandb.log(train_loss)
-        wandb.log(valid_loss)
-        wandb.log({"valid accuracy": valid_acc, "epoch": epoch_no, "run_no": run_no})
+
+        wandb_data = dict()
+        wandb_data.update(train_loss)
+        wandb_data.update(valid_loss)
+        wandb_data.update({"valid_accuracy": valid_acc, "epoch": epoch_no, "run_no": run_no})
+
+        wandb.log(wandb_data)
 
         # No need for evaluating this, we can observe it on wandb
         #if r_valid_loss < r_best_valid_loss:
@@ -50,7 +54,7 @@ def epoch_run(model, sampler, active_dataset, run_no, model_writer, cfg):
         #        model_writer.write(sampler, 'sampler_' + name)
 
     test_acc = test_epoch(model, active_dataset, batch_size=cfg.batch_size, device=cfg.device)
-    wandb.log({"test accuracy": test_acc, "run_no": run_no})
+    wandb.log({"test_accuracy": test_acc, "run_no": run_no})
 
     #print(f"Best Classification Loss \t{c_best_valid_loss} with Epoch No {c_best_epoch_no} for Run {run_no}")
     #print(f"Final Reconstruction Loss \t{r_best_valid_loss} with Epoch No {r_best_epoch_no} for Run {run_no}")
