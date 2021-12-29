@@ -4,6 +4,8 @@ import math
 from torchvision.datasets import CIFAR10, CIFAR100
 from torch.utils.data import DataLoader, Subset
 import torch
+import numpy as np
+import random
 
 from src.utils import TRANSFORMS_DICT
 
@@ -23,17 +25,24 @@ def torch_rp_bool(k:int, n:int):
     x[idx] = True
     return x
 
+def seed_worker(worker_id):
+    worker_seed = torch.initial_seed() % 2**32
+    np.random.seed(worker_seed)
+    random.seed(worker_seed)
+
 class ActiveDataset():
 	def __init__(self, name, 
               	 path=None, init_lbl_ratio=0.1,
-                 val_ratio=0.1, transform=None):
+                 val_ratio=0.1, transform=None,
+                 seed=42):
 
 		print(f'Constructing Active Dataset for {name}:')	
 
 		self.dataset_name = name
 		self.dataset_path = './data/' + name if path is None else path
 		self.transform = self._get_transform(transform)
-		
+		self.seed = seed
+  
 		self._take_datasets()
 		self._init_mask(init_lbl_ratio, val_ratio)
 		self.update()
@@ -103,7 +112,7 @@ class ActiveDataset():
 		self.labeled_trainset = Subset(self.trainset, lbld_idx)
 		self.unlabeled_trainset = Subset(self.trainset, unlbld_idx)
 
-	def get_loader(self, spec, batch_size, shuffle=True, num_workers=1):
+	def get_loader(self, spec, batch_size, shuffle=True, num_workers=8):
 		if spec.lower() == 'train':
 			dataset = self.trainset
 		elif spec.lower() == 'test':
@@ -117,10 +126,15 @@ class ActiveDataset():
 		else:
 			sys.exit(f"No set known as {spec}, exiting...")
 
+		g = torch.Generator()
+		g.manual_seed(self.seed)
+
 		loader = DataLoader(dataset, 
                       	    batch_size=batch_size, 
                             shuffle=shuffle,
-                            num_workers=num_workers)
+                            num_workers=num_workers,
+                            worker_init_fn=seed_worker,
+    						generator=g)
 
 		return loader
 

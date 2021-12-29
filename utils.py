@@ -5,7 +5,7 @@ from shutil import copyfile
 import numpy as np
 import torch
 from pytorch_lightning.utilities.seed import seed_everything as light_seed
-
+import copy
 
 import wandb
 
@@ -13,6 +13,19 @@ SAVE_DIR = './save/'
 SAVE_DIR_PARAM = SAVE_DIR + 'param/'
 CONFIG_DIR = './config.py'
 
+def config_lister(config):
+
+    if isinstance(config['seed'], int):
+        cfg_list = [config]
+    else:
+        seeds = [int(s) for s in config['seed'].split(',')]
+        cfg_list = list()
+        for s in seeds:
+            cfg_s = copy.deepcopy(config)
+            cfg_s['seed'] = s
+            cfg_list.append(cfg_s)
+
+    return cfg_list
 
 def config_defaulter(cfg):
 
@@ -68,8 +81,11 @@ def seed_everything(seed: int):
     torch.cuda.manual_seed(seed)
     light_seed(seed)
     torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = True
-
+    torch.backends.cudnn.benchmark = False
+    # torch.use_deterministic_algorithms(True) It does not work with GPU
+    # os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":16:8:4096:2" # creates randomness
+    # os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:2" # creates inefficiency
+    
     print(f"Seed has been set to {seed}...")
 
     

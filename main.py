@@ -3,8 +3,9 @@ from src.data import ActiveDataset
 from src.model import Net
 from src.base_models.samplers import SAMPLER_DICT
 from src.training import epoch_run
-from utils import config_defaulter, ModelWriter
+from utils import config_defaulter, ModelWriter, config_lister
 from datetime import datetime
+import copy
 
 import yaml
 import wandb
@@ -16,7 +17,8 @@ def main(cfg):
 
     active_dataset = ActiveDataset(cfg.dataset['name'], 
                                init_lbl_ratio=cfg.dataset['init_lbl_ratio'],
-                               val_ratio=cfg.dataset['val_ratio'])
+                               val_ratio=cfg.dataset['val_ratio'],
+                               seed = cfg.seed)
     
     step_acq_size = int(cfg.update_ratio * len(active_dataset.base_trainset))
 
@@ -43,17 +45,21 @@ def main(cfg):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config', help='path to config file', default='configs/cal_sampling_config.yaml')
+    parser.add_argument('--config', help='path to config file', default='configs/config.yaml')
     args = parser.parse_args()
 
     with open(args.config) as file:
         config = yaml.load(file, Loader=yaml.FullLoader)
 
-    wandb.init(config=config,
-               project="Deep Learning Project", entity="active_learners")
+    cfg_list = config_lister(config)
 
-    cfg = wandb.config
-    run_name = datetime.now().strftime("%Y_%m_%d_%H%M")[2:] + '_' + cfg.experiment_name + '_' + wandb.run.id
-    wandb.run.name = run_name
+    for config in cfg_list:
 
-    main(cfg)
+        wandb.init(config=config, project="Deep Learning Project", 
+                   entity="active_learners")
+
+        cfg = wandb.config
+        wandb.run.name = datetime.now().strftime("%Y_%m_%d_%H%M")[2:] + '_' \
+                         + cfg.experiment_name + '_' + str(cfg.seed) + '_' + wandb.run.id
+
+        main(cfg)
