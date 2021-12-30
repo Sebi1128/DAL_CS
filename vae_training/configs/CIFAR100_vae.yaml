@@ -1,0 +1,20 @@
+run_name: cifar100_vae
+
+n_epochs: 100
+strategy: ddp
+
+dataset:
+  data_dir: data
+  name: CIFAR100
+  do_random_crop: false
+  do_horizontal_flip: false
+
+  batch_size: 64
+  n_workers: 4
+
+
+vae:
+  latent_dim: 32
+  use_pretrained_cifar_enc: true
+  im_channels: 3
+  im_height: 32
