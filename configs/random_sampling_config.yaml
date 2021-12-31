@@ -45,6 +45,13 @@ btk:
   name: vaal
   z_dim: 32
 
+off_the_shelf_vae:
+  load_from_checkpoint: null
+  latent_dim: 32
+  use_pretrained_cifar_enc: false
+  im_channels: 1
+  im_height: 32
+
 cls:
   optimizer: sgd
   lr: 0.01

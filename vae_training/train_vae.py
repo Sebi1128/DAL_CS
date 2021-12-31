@@ -2,8 +2,6 @@ import yaml
 import argparse
 from datetime import datetime
 
-from pl_bolts.models.autoencoders import VAE
-
 from pytorch_lightning import Trainer
 from pytorch_lightning.callbacks import LearningRateMonitor, EarlyStopping, ModelCheckpoint
 from pytorch_lightning.loggers import WandbLogger
@@ -11,23 +9,9 @@ import torchvision
 from torch.utils.data import DataLoader
 from pl_bolts.datamodules import CIFAR10DataModule, BinaryMNISTDataModule, FashionMNISTDataModule
 from pl_bolts.transforms.dataset_normalizations import cifar10_normalization
-from torch.nn import Conv2d
 
+from get_model import get_model
 
-def get_model(cfg):
-    vae = VAE(input_height=cfg['im_height'], latent_dim=cfg['latent_dim'])
-
-    if cfg['use_pretrained_cifar_enc']:
-        pretrained_vae = VAE(input_height=cfg['im_height'])
-        pretrained_vae = pretrained_vae.from_pretrained('cifar10-resnet18')
-        pretrained_vae.freeze()
-        vae.encoder = pretrained_vae.encoder
-
-    if cfg['im_channels'] != 3:
-        vae.encoder.conv1 = Conv2d(cfg['im_channels'], 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
-        vae.decoder.conv1 = Conv2d(64, cfg['im_channels'], kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
-
-    return vae
 
 def get_dataset(cfg):
     res = None
@@ -171,7 +155,7 @@ def train(cfg):
     wandb_logger.experiment.config.update(cfg)
 
     callbacks = []
-    callbacks += [EarlyStopping(monitor="val_loss", min_delta=0.00, patience=5, verbose=False, mode="max")]
+    callbacks += [EarlyStopping(monitor="val_loss", min_delta=0.00, patience=5, verbose=False, mode="min")]
     callbacks += [ModelCheckpoint(
         monitor='val_loss',
         dirpath='vae_checkpoints/{}'.format(experiment_name),

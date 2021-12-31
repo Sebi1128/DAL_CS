@@ -31,6 +31,7 @@ batch_size: 128
 n_epochs: 100
 
 # Architecture
+
 embedding:
   use_off_the_shelf_vae: true # if set to true -> set train_vae to false and z_dim in cls to 256 !!!! Also do not use VAAL sampler
   train_vae: false
@@ -44,6 +45,13 @@ dec:
 btk:
   name: vaal
   z_dim: 32
+
+off_the_shelf_vae:
+  load_from_checkpoint: null
+  latent_dim: 32
+  use_pretrained_cifar_enc: false
+  im_channels: 1
+  im_height: 32
 
 cls:
   optimizer: sgd

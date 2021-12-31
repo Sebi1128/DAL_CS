@@ -14,6 +14,7 @@ dataset:
 
 
 vae:
+  load_from_checkpoint: null
   latent_dim: 32
   use_pretrained_cifar_enc: false
   im_channels: 1
