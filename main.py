@@ -2,7 +2,7 @@ import argparse
 from src.data import ActiveDataset
 from src.model import Net
 from src.base_models.samplers import SAMPLER_DICT
-from src.training import epoch_run
+from src.training import epoch_run, visualize_latent
 from utils import config_defaulter, ModelWriter, config_lister
 from datetime import datetime
 import copy
@@ -30,6 +30,7 @@ def main(cfg):
         #wandb.watch(model, log="gradients", log_freq=1000, log_graph=(True))
         #wandb.watch(sampler, log="gradients", log_freq=1000, log_graph=(True))
 
+        visualize_latent(model, active_dataset, cfg)
         epoch_run(model, sampler, active_dataset, run_no, model_writer, cfg)
 
         if run_no < (cfg.n_runs - 1):
@@ -45,7 +46,7 @@ def main(cfg):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config', help='path to config file', default='configs/config.yaml')
+    parser.add_argument('--config', help='path to config file', default='configs/default_config.yaml')
     args = parser.parse_args()
 
     with open(args.config) as file:

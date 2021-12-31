@@ -74,6 +74,11 @@ class Net(nn.Module):
         z = latent[0]
         return z
 
+    def latent_mu(self, x):
+        latent, _, _ = self.forward(x, classify=False, reconstruct=False)
+        mu = latent[1]
+        return mu
+
     def latent_param(self, x):
         latent, _, _ = self.forward(x, classify=False, reconstruct=False)
         mu = latent[1]
