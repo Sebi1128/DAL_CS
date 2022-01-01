@@ -125,6 +125,8 @@ class ActiveDataset():
 			dataset = self.labeled_trainset
 		elif spec.lower() == 'unlabeled':
 			dataset = self.unlabeled_trainset
+		elif spec.lower() == 'train_all':
+			dataset = self.base_trainset
 		else:
 			sys.exit(f"No set known as {spec}, exiting...")
 

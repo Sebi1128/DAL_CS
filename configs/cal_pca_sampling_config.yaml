@@ -17,12 +17,12 @@ device: cpu
 #  name: 'cal'
 #  n_neighs: 10
 #  neigh_dist: 'kldiv'
-smp:
-  name: 'random'
 #smp:
-#  name: 'cal_pca'
-#  n_neighs: 10
-#  n_pca_comp: 32
+#  name: 'random'
+smp:
+  name: 'cal_pca'
+  n_neighs: 10
+  n_pca_comp: 32
 #smp:
 #  optimizer: adam
 #  lr: 0.0005
@@ -54,11 +54,11 @@ off_the_shelf_vae:
   load_from_checkpoint: null
   latent_dim: 32
   use_pretrained_cifar_enc: false
-  im_channels: 1
+  im_channels: 3
   im_height: 32
 
 cls:
   optimizer: sgd
   lr: 0.01
-  name: vaal_with_latent
+  name: vaal
   z_dim: 256

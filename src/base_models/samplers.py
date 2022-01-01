@@ -8,6 +8,7 @@ import unittest
 from torch import optim
 from .model_utils import kaiming_init
 from torch.nn.functional import normalize
+from sklearn.decomposition import PCA
 
 
 class BaseSampler(nn.Module):
@@ -202,5 +203,72 @@ class Discriminator(nn.Module):
         return self.net(z)
 
 
-SAMPLER_DICT = {'cal': CAL, 'random': Random, 'vaal': VAALSampler}
+class CAL_PCA(BaseSampler):
+    def __init__(self, cfg_smp, device):
+        super().__init__(cfg_smp, device)
+
+        self.n_neighs = cfg_smp['n_neighs']
+        self.n_pca_comp = cfg_smp['n_pca_comp']
+
+        self.dist_func = lambda y_l, y_p: kl_div(y_l.cpu().detach(), y_p.cpu().detach()).sum(1)
+
+        self.neigh_dist_func = lambda p, A: torch.sum((p[...] - A[...]) ** 2, axis=1)
+
+
+    def sample(self, active_data, acq_size, model):
+        # Take all the training data for the PCA
+        all_DL = active_data.get_loader('train_all', batch_size=len(active_data.base_trainset))
+        all_iter = iter(all_DL)
+        x_all, _ = next(all_iter)
+        pca = PCA(n_components=self.n_pca_comp)
+        pca_model = pca.fit(torch.reshape(x_all, (len(active_data.base_trainset), -1)))
+        del x_all, _, all_DL, all_iter
+
+        labeled_data = active_data.get_loader('labeled', batch_size=self.batch_size)
+        unlabeled_data = active_data.get_loader('unlabeled', batch_size=self.batch_size)
+
+        z_lab = []
+        p_lab = []
+        z_unlab = []
+        p_unlab = []
+
+        for x, _ in labeled_data:
+            x = x.to(self.dev)
+            # Project the data to the PCA coordinates
+            z = pca_model.transform(torch.reshape(x, (self.batch_size, -1)))
+            z_lab.append(torch.tensor(z, device=self.dev))
+            p = model.classify(x)
+            p_lab.append(p)
+        for x, _ in unlabeled_data:
+            x = x.to(self.dev)
+            # Project the data to the PCA coordinates
+            z = pca_model.transform(torch.reshape(x, (self.batch_size, -1)))
+            z_unlab.append(torch.tensor(z, device=self.dev))
+            p = model.classify(x)
+            p_unlab.append(p)
+
+        z_lab = torch.cat(z_lab)
+        p_lab = normalize(torch.exp(torch.cat(p_lab)), p=1)
+        z_unlab = torch.cat(z_unlab)
+        p_unlab = normalize(torch.exp(torch.cat(p_unlab)), p=1)
+
+
+        score = torch.zeros((len(p_unlab)))
+
+        for i in range(len(p_unlab)):
+            idxs_neigh = self.find_neighs(z_unlab[i].unsqueeze(0), z_lab, self.n_neighs)
+            score[i] = self.dist_func(p_lab[idxs_neigh], p_unlab[i].unsqueeze(0)).mean()
+
+        score *= -1
+        _, querry_indices = torch.topk(score, acq_size)
+        unlbld_idx = torch.where(torch.logical_not(active_data.lbld_mask))[0]
+
+        return unlbld_idx[querry_indices]
+
+    def find_neighs(self, p, A, n_neigh):
+        dist = self.neigh_dist_func(p, A)
+        return torch.argsort(dist)[:n_neigh]
+
+
+SAMPLER_DICT = {'cal': CAL, 'random': Random, 'vaal': VAALSampler, 'cal_pca': CAL_PCA}
 
