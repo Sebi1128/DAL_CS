@@ -1,14 +1,18 @@
+import os
 from tqdm import tqdm
 import wandb
 import torch
 from copy import deepcopy
 from sklearn.manifold import TSNE
 import matplotlib.pyplot as plt
-plt.interactive(True)
+plt.interactive(False)
 
 
+def visualize_latent(model, active_dataset, cfg, run_no):
 
-def visualize_latent(model, active_dataset, cfg):
+    if not os.path.exists(f'save/results/{cfg.experiment_name}'):
+        os.makedirs(f'save/results/{cfg.experiment_name}')
+    
     nr_of_samples = 2500
     device = cfg.device
 
@@ -24,11 +28,11 @@ def visualize_latent(model, active_dataset, cfg):
                       random_state=0).fit_transform(torch.reshape(latent, (nr_of_samples, -1)))
 
     fig, ax = plt.subplots()
-    plt.title('Latent space of mu and logvar')
+    plt.title(f'Latent space of mu and logvar of {run_no}')
     cmap = plt.cm.get_cmap('tab10', 10)
     plt.scatter(x=X_embedded_mu_logvar[:, 0], y=X_embedded_mu_logvar[:, 1], c=y, s=20, cmap=cmap)
     plt.colorbar()
-    plt.savefig('save/results/latent_visual_mu_logvar.png')
+    plt.savefig(f'save/results/{cfg.experiment_name}/latent_visual_mu_logvar_{run_no}.png')
 
     mu = model.latent_mu(x).cpu()
 
@@ -37,11 +41,11 @@ def visualize_latent(model, active_dataset, cfg):
                       random_state=0).fit_transform(mu)
 
     fig, ax = plt.subplots()
-    plt.title('Latent space of mu')
+    plt.title(f'Latent space of mu of {run_no}')
     cmap = plt.cm.get_cmap('tab10', 10)
     plt.scatter(x=X_embedded_mu[:, 0], y=X_embedded_mu[:, 1], c=y, s=20, cmap=cmap)
     plt.colorbar()
-    plt.savefig('save/latent_visual_mu.png')
+    plt.savefig(f'save/results/{cfg.experiment_name}/latent_visual_mu_{run_no}.png')
 
 
 
@@ -105,6 +109,8 @@ def epoch_run(model, sampler, active_dataset, run_no, model_writer, cfg):
                 "test_acc_best_loss"    : test_acc_best_loss,
                 "run_no": run_no})
 
+    if cfg.visual_latent == True:
+        visualize_latent(model, active_dataset, cfg, run_no)
     #print(f"Best Classification Loss \t{c_best_valid_loss} with Epoch No {c_best_epoch_no} for Run {run_no}")
     #print(f"Final Reconstruction Loss \t{r_best_valid_loss} with Epoch No {r_best_epoch_no} for Run {run_no}")
 

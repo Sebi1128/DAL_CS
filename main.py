@@ -2,7 +2,7 @@ import argparse
 from src.data import ActiveDataset
 from src.model import Net
 from src.base_models.samplers import SAMPLER_DICT
-from src.training import epoch_run, visualize_latent
+from src.training import epoch_run
 from utils import config_defaulter, ModelWriter, config_lister
 from datetime import datetime
 import copy
@@ -31,7 +31,6 @@ def main(cfg):
         #wandb.watch(sampler, log="gradients", log_freq=1000, log_graph=(True))
 
         epoch_run(model, sampler, active_dataset, run_no, model_writer, cfg)
-        visualize_latent(model, active_dataset, cfg)
 
         if run_no < (cfg.n_runs - 1):
             train2lbl_idx = sampler.sample(

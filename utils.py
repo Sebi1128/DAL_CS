@@ -31,7 +31,11 @@ def config_defaulter(cfg):
 
     cfg.update({}, allow_val_change=True) 
 
-    
+    try:
+        a = cfg.visual_latent
+    except:
+        cfg.visual_latent = False
+
     cfg = get_device(cfg)
     cfg = dataset_parametrizer(cfg)
 

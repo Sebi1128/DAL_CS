@@ -1,6 +1,7 @@
 experiment_name: test_cifar10_vae32_clsVAAL_smpCAL
 
 seed: 42
+visual_latent: true
 
 # Dataset and Active Learning
 dataset:
