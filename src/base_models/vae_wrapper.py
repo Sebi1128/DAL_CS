@@ -1,16 +1,17 @@
 # https://pytorch-lightning-bolts.readthedocs.io/en/latest/autoencoders.html
 from torch import nn
-from pl_bolts.models.autoencoders import VAE
-
+from vae_training.get_model import get_model
 
 class VAEWrapper(nn.Module):
     def __init__(self, cfg):
         super(VAEWrapper, self).__init__()
         self.cfg = cfg
 
-        self.vae = VAE(input_height=32)
-        self.vae = self.vae.from_pretrained('cifar10-resnet18')
-        self.vae.freeze()
+        self.vae = get_model(cfg.off_the_shelf_vae)
+        #self.vae = self.vae.from_pretrained('cifar10-resnet18')
+        if not cfg.embedding['train_vae']:
+            self.vae.freeze()
+
 
     def get_encoder(self):
         return EncoderWrapper(self.cfg.enc, self.vae.encoder)
