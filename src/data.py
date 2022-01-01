@@ -1,7 +1,7 @@
 import sys
 import math
 
-from torchvision.datasets import CIFAR10, CIFAR100
+from torchvision.datasets import CIFAR10, CIFAR100,  MNIST, FashionMNIST 
 from torch.utils.data import DataLoader, Subset
 import torch
 import numpy as np
@@ -11,7 +11,9 @@ from src.utils import TRANSFORMS_DICT
 
 DATASETS_DICT = {
 	'cifar10'	: CIFAR10,
-	'cifar100'	: CIFAR100
+	'cifar100'	: CIFAR100,
+	'mnist'		: MNIST,
+    'fmnist'	: FashionMNIST
 }
 
 def torch_rp_bool(k:int, n:int):

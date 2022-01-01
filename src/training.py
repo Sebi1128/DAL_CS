@@ -17,7 +17,7 @@ def visualize_latent(model, active_dataset, cfg):
     x, y = next(all_iter)
     x = x.to(device)
 
-    latent = model.latent_param(x)
+    latent = model.latent_param(x).cpu()
 
     X_embedded_mu_logvar = TSNE(n_components=2, early_exaggeration=70, perplexity=30,
                       learning_rate=500, init='pca', n_iter=5000, n_iter_without_progress=300, verbose=5,
@@ -28,9 +28,9 @@ def visualize_latent(model, active_dataset, cfg):
     cmap = plt.cm.get_cmap('tab10', 10)
     plt.scatter(x=X_embedded_mu_logvar[:, 0], y=X_embedded_mu_logvar[:, 1], c=y, s=20, cmap=cmap)
     plt.colorbar()
-    plt.savefig('save/latent_visual_mu_logvar.png')
+    plt.savefig('save/results/latent_visual_mu_logvar.png')
 
-    mu = model.latent_mu(x)
+    mu = model.latent_mu(x).cpu()
 
     X_embedded_mu = TSNE(n_components=2, early_exaggeration=70, perplexity=30,
                       learning_rate=500, init='pca', n_iter=5000, n_iter_without_progress=300, verbose=5,

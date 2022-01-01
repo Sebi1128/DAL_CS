@@ -30,8 +30,8 @@ def main(cfg):
         #wandb.watch(model, log="gradients", log_freq=1000, log_graph=(True))
         #wandb.watch(sampler, log="gradients", log_freq=1000, log_graph=(True))
 
-        visualize_latent(model, active_dataset, cfg)
         epoch_run(model, sampler, active_dataset, run_no, model_writer, cfg)
+        visualize_latent(model, active_dataset, cfg)
 
         if run_no < (cfg.n_runs - 1):
             train2lbl_idx = sampler.sample(
@@ -46,7 +46,7 @@ def main(cfg):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config', help='path to config file', default='configs/default_config.yaml')
+    parser.add_argument('--config', help='path to config file', default='configs/test_configs/b.yaml')
     args = parser.parse_args()
 
     with open(args.config) as file:

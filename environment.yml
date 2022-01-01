@@ -15,6 +15,7 @@ dependencies:
   - tqdm
   - pyyaml
   - scipy
+  - scikit-learn
   - pip:
     - pickle5
     - wandb
