@@ -28,7 +28,7 @@ def visualize_latent(model, active_dataset, cfg, run_no):
                       random_state=0).fit_transform(torch.reshape(latent, (nr_of_samples, -1)))
 
     fig, ax = plt.subplots()
-    plt.title(f'Latent space of mu and logvar of {run_no}')
+    plt.title(f'Run no: {run_no} Latent Space of Mu and Logvar')
     cmap = plt.cm.get_cmap('tab10', 10)
     plt.scatter(x=X_embedded_mu_logvar[:, 0], y=X_embedded_mu_logvar[:, 1], c=y, s=20, cmap=cmap)
     plt.colorbar()
@@ -41,7 +41,7 @@ def visualize_latent(model, active_dataset, cfg, run_no):
                       random_state=0).fit_transform(mu)
 
     fig, ax = plt.subplots()
-    plt.title(f'Latent space of mu of {run_no}')
+    plt.title(f'Run no: {run_no} Latent Space of Mu')
     cmap = plt.cm.get_cmap('tab10', 10)
     plt.scatter(x=X_embedded_mu[:, 0], y=X_embedded_mu[:, 1], c=y, s=20, cmap=cmap)
     plt.colorbar()
