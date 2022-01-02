@@ -1,6 +1,6 @@
 experiment_name: fmnist_vae32_clsVAAL_smpCAL
 
-seed: 42
+seed: 42, 26, 15
 visual_latent: false
 
 # Dataset and Active Learning
