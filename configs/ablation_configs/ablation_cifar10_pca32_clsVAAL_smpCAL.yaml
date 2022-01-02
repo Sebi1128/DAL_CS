@@ -17,7 +17,7 @@ device: gpu
 smp:
   name: 'cal_pca'
   n_neighs: 10
-  neigh_dist: 'l2'
+  n_pca_comp: 32
 #smp:
 #  name: 'random'
 
