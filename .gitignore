@@ -6,6 +6,7 @@
 **/wandb
 **/save
 **.idea/
+**/pretrained_models
 
 ### JupyterNotebooks ###
 # gitignore template for Jupyter Notebooks

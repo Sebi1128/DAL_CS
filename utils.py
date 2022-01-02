@@ -9,6 +9,8 @@ import copy
 
 import wandb
 
+from vae_training.pretrained_vae_loader import download_vae
+
 SAVE_DIR = './save/'
 SAVE_DIR_PARAM = SAVE_DIR + 'param/'
 CONFIG_DIR = './config.py'
@@ -28,6 +30,8 @@ def config_lister(config):
     return cfg_list
 
 def config_defaulter(cfg):
+
+    check_vae_download()
 
     cfg.update({}, allow_val_change=True) 
 
@@ -91,6 +95,10 @@ def dataset_parametrizer(cfg):
         cfg.cls['in_channels'] = 1
         
     return cfg
+
+def check_vae_download():
+    if not os.path.isdir('./vae_training/pretrained_models'):
+        download_vae()
 
 def seed_everything(seed: int):
 
