@@ -1,0 +1,55 @@
+experiment_name: mnist_vae32_clsVAAL_smpRND
+
+seed: 42
+visual_latent: false
+
+# Dataset and Active Learning
+dataset:
+  name: mnist
+  init_lbl_ratio: 0.02
+  val_ratio: 0.05
+
+update_ratio: 0.02
+n_runs: 5 # should be one more than the number of sampling updates
+
+device: gpu
+
+#smp:
+#  name: 'cal'
+#  n_neighs: 10
+#  neigh_dist: 'l2'
+smp:
+  name: 'random'
+
+# Run Hyperparameters
+batch_size: 128
+n_epochs: 2
+
+# Architecture
+
+embedding:
+  use_off_the_shelf_vae: true # if set to true -> set train_vae to false and z_dim in cls to 256 !!!! Also do not use VAAL sampler
+  train_vae: false
+  optimizer: adam
+  lr: 0.0005
+enc:
+  name: vaal
+dec:
+  name: vaal
+  kld_weight: 1
+btk:
+  name: vaal
+  z_dim: 32
+
+off_the_shelf_vae:
+  load_from_checkpoint: null
+  latent_dim: 32
+  use_pretrained_cifar_enc: false
+  im_channels: 1
+  im_height: 32
+
+cls:
+  optimizer: sgd
+  lr: 0.01
+  name: vaal
+  z_dim: 32

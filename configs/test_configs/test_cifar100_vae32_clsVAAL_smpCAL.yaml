@@ -1,10 +1,11 @@
-experiment_name: test_cifar10_vae32_clsVAAL_smpRND
+experiment_name: test_cifar100_vae32_clsVAAL_smpCAL
 
 seed: 42
+visual_latent: false
 
 # Dataset and Active Learning
 dataset:
-  name: cifar10
+  name: cifar100
   init_lbl_ratio: 0.02
   val_ratio: 0.01
 
@@ -13,12 +14,12 @@ n_runs: 2 # should be one more than the number of sampling updates
 
 device: gpu
 
-#smp:
-#  name: 'cal'
-#  n_neighs: 10
-#  neigh_dist: 'l2'
 smp:
-  name: 'random'
+  name: 'cal'
+  n_neighs: 10
+  neigh_dist: 'l2'
+#smp:
+#  name: 'random'
 
 # Run Hyperparameters
 batch_size: 128

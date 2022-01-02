@@ -67,13 +67,29 @@ def dataset_parametrizer(cfg):
         cfg.enc['input_size'] = [32, 32]
         cfg.dec['output_size'] = [32, 32]
         cfg.cls['output_size'] = 10
+        cfg.cls['in_channels'] = 3
         
     elif name == 'cifar100':
 
         cfg.enc['input_size'] = [32, 32]
         cfg.dec['output_size'] = [32, 32]
         cfg.cls['output_size'] = 100
+        cfg.cls['in_channels'] = 3
 
+    elif name == 'mnist':
+
+        cfg.enc['input_size'] = [32, 32]
+        cfg.dec['output_size'] = [32, 32]
+        cfg.cls['output_size'] = 10
+        cfg.cls['in_channels'] = 1
+        
+    elif name == 'fmnist':
+
+        cfg.enc['input_size'] = [32, 32]
+        cfg.dec['output_size'] = [32, 32]
+        cfg.cls['output_size'] = 100
+        cfg.cls['in_channels'] = 1
+        
     return cfg
 
 def seed_everything(seed: int):

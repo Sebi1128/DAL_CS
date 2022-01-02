@@ -1,7 +1,6 @@
-experiment_name: test_cifar10_vae32_clsVAAL_smpCAL
+experiment_name: test_cifar10_pca32_clsVAAL_smpCAL
 
 seed: 42
-visual_latent: true
 
 # Dataset and Active Learning
 dataset:
@@ -14,12 +13,22 @@ n_runs: 2 # should be one more than the number of sampling updates
 
 device: gpu
 
-smp:
-  name: 'cal'
-  n_neighs: 10
-  neigh_dist: 'l2'
+#smp:
+#  name: 'cal'
+#  n_neighs: 10
+#  neigh_dist: 'kldiv'
 #smp:
 #  name: 'random'
+smp:
+  name: 'cal_pca'
+  n_neighs: 10
+  n_pca_comp: 32
+#smp:
+#  optimizer: adam
+#  lr: 0.0005
+#  name: vaal
+#  latent_dim: 32
+#  n_sub_epochs: 1
 
 # Run Hyperparameters
 batch_size: 128
@@ -52,4 +61,4 @@ cls:
   optimizer: sgd
   lr: 0.01
   name: vaal
-  z_dim: 32
+  z_dim: 256

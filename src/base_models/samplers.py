@@ -235,14 +235,14 @@ class CAL_PCA(BaseSampler):
         for x, _ in labeled_data:
             x = x.to(self.dev)
             # Project the data to the PCA coordinates
-            z = pca_model.transform(torch.reshape(x, (self.batch_size, -1)))
+            z = pca_model.transform(torch.reshape(x.cpu(), (self.batch_size, -1)))
             z_lab.append(torch.tensor(z, device=self.dev))
             p = model.classify(x)
             p_lab.append(p)
         for x, _ in unlabeled_data:
             x = x.to(self.dev)
             # Project the data to the PCA coordinates
-            z = pca_model.transform(torch.reshape(x, (self.batch_size, -1)))
+            z = pca_model.transform(torch.reshape(x.cpu(), (self.batch_size, -1)))
             z_unlab.append(torch.tensor(z, device=self.dev))
             p = model.classify(x)
             p_unlab.append(p)

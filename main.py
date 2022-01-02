@@ -45,7 +45,7 @@ def main(cfg):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config', help='path to config file', default='configs/cal_pca_sampling_config.yaml')
+    parser.add_argument('--config', help='path to config file', default='configs/test_configs/test_mnist_vae32_clsVAAL_smpCAL.yaml')
     args = parser.parse_args()
 
     with open(args.config) as file:
