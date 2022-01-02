@@ -17,7 +17,7 @@ device: gpu
 smp:
   name: 'cal'
   n_neighs: 10
-  neigh_dist: 'kl'
+  neigh_dist: 'l2'
 #smp:
 #  name: 'random'
 
@@ -51,5 +51,5 @@ off_the_shelf_vae:
 cls:
   optimizer: sgd
   lr: 0.01
-  name: vaal
+  name: vaal_with_latent
   z_dim: 32
