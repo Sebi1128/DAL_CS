@@ -42,7 +42,7 @@ btk:
   z_dim: 32
 
 off_the_shelf_vae:
-  load_from_checkpoint: null
+  load_from_checkpoint: 'vae_training/pretrained_models/32_dim/cifar10/cifar10_vae_30-12-2021_22-50-52.ckpt'
   latent_dim: 32
   use_pretrained_cifar_enc: false
   im_channels: 3

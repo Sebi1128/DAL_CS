@@ -23,7 +23,7 @@ smp:
 
 # Run Hyperparameters
 batch_size: 128
-n_epochs: 2
+n_epochs: 100
 
 # Architecture
 
@@ -42,7 +42,7 @@ btk:
   z_dim: 32
 
 off_the_shelf_vae:
-  load_from_checkpoint: null
+  load_from_checkpoint: 'vae_training/pretrained_models/32_dim/mnist_vae/mnist_vae_30-12-2021_22-43-59.ckpt'
   latent_dim: 32
   use_pretrained_cifar_enc: false
   im_channels: 1
