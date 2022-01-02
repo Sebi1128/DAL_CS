@@ -130,17 +130,20 @@ def train_epoch(model, sampler, active_data, batch_size, device, train_vae=True)
     unlbl_iter = iter(unlbld_DL)
     all_iter = iter(all_DL)
 
-    n_epochs = len(active_data.trainset) // batch_size
+    n_iters = len(active_data.trainset) // batch_size
     c_losses = list()
     r_losses = list()
     se_losses = list()
     ss_losses = list()
 
-    pbar = tqdm(iter_schedule[:n_epochs], leave=False)
+    pbar = tqdm(iter_schedule[:n_iters], leave=False)
     pbar.set_description("model epoch")
     for is_labeled in pbar:
         if is_labeled:
-            x, t = next(lbl_iter)
+            try:
+                x, t = next(lbl_iter)
+            except:
+                continue
             x = x.to(device)
             t = t.to(device)
             c = model.classify(x)
