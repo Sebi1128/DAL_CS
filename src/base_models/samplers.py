@@ -110,7 +110,6 @@ class CAL(BaseSampler):
             idxs_neigh = self.find_neighs(z_unlab[i].unsqueeze(0), z_lab, self.n_neighs)
             score[i] = self.dist_func(p_lab[idxs_neigh], p_unlab[i].unsqueeze(0)).mean()
 
-        score *= -1
         _, querry_indices = torch.topk(score, acq_size)
         unlbld_idx = torch.where(torch.logical_not(active_data.lbld_mask))[0]
 
@@ -259,7 +258,6 @@ class CAL_PCA(BaseSampler):
             idxs_neigh = self.find_neighs(z_unlab[i].unsqueeze(0), z_lab, self.n_neighs)
             score[i] = self.dist_func(p_lab[idxs_neigh], p_unlab[i].unsqueeze(0)).mean()
 
-        score *= -1
         _, querry_indices = torch.topk(score, acq_size)
         unlbld_idx = torch.where(torch.logical_not(active_data.lbld_mask))[0]
 

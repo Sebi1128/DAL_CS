@@ -91,7 +91,7 @@ def dataset_parametrizer(cfg):
 
         cfg.enc['input_size'] = [32, 32]
         cfg.dec['output_size'] = [32, 32]
-        cfg.cls['output_size'] = 100
+        cfg.cls['output_size'] = 10
         cfg.cls['in_channels'] = 1
         
     return cfg
