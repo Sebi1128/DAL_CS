@@ -1,10 +1,21 @@
-import pytorch_lightning as pl
+"""
+Deep Active Learning with Contrastive Sampling
+
+Deep Learning Project for Deep Learning Course (263-3210-00L)  
+by Department of Computer Science, ETH Zurich, Autumn Semester 2021 
+
+Authors:  
+Sebastian Frey (sefrey@student.ethz.ch)  
+Remo Kellenberger (remok@student.ethz.ch)  
+Aron Schmied (aronsch@student.ethz.ch)  
+Guney Tombak (gtombak@student.ethz.ch)  
+"""
+
 import torch.nn as nn
 from scipy.special import kl_div
 import numpy as np
 import torch
 from tqdm import tqdm
-import unittest
 from torch import optim
 from .model_utils import kaiming_init
 from torch.nn.functional import normalize

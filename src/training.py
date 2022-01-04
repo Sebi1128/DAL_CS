@@ -1,3 +1,16 @@
+"""
+Deep Active Learning with Contrastive Sampling
+
+Deep Learning Project for Deep Learning Course (263-3210-00L)  
+by Department of Computer Science, ETH Zurich, Autumn Semester 2021 
+
+Authors:  
+Sebastian Frey (sefrey@student.ethz.ch)  
+Remo Kellenberger (remok@student.ethz.ch)  
+Aron Schmied (aronsch@student.ethz.ch)  
+Guney Tombak (gtombak@student.ethz.ch)  
+"""
+
 from tqdm import tqdm
 import wandb
 import torch

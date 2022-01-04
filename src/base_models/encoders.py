@@ -1,9 +1,20 @@
+"""
+Deep Active Learning with Contrastive Sampling
+
+Deep Learning Project for Deep Learning Course (263-3210-00L)  
+by Department of Computer Science, ETH Zurich, Autumn Semester 2021 
+
+Authors:  
+Sebastian Frey (sefrey@student.ethz.ch)  
+Remo Kellenberger (remok@student.ethz.ch)  
+Aron Schmied (aronsch@student.ethz.ch)  
+Guney Tombak (gtombak@student.ethz.ch)  
+"""
+
 from collections import OrderedDict
-from torch.nn import functional as F
 from torch import nn
 import torch
 from .model_utils import kaiming_init
-from torch.nn.modules.batchnorm import BatchNorm2d
 
 
 class VAAL_Encoder(nn.Module):

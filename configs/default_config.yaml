@@ -1,3 +1,14 @@
+# Deep Active Learning with Contrastive Sampling
+#
+# Deep Learning Project for Deep Learning Course (263-3210-00L)  
+# by Department of Computer Science, ETH Zurich, Autumn Semester 2021 
+#
+# Authors:  
+# Sebastian Frey (sefrey@student.ethz.ch)  
+# Remo Kellenberger (remok@student.ethz.ch)  
+# Aron Schmied (aronsch@student.ethz.ch)  
+# Guney Tombak (gtombak@student.ethz.ch)  
+
 experiment_name: default_configuration
 
 # more than one seed can be set 
@@ -17,26 +28,26 @@ n_runs: 9 # number of total runs
 device: gpu
 
 # Sampler Parameters
-#smp:
-#  name: 'cal' # sampler type: Contrast
-#  n_neighs: 10 # number of neighbors to be considered for CAL
-#  neigh_dist: 'kldiv' # 
 smp:
-  name: 'random'
+  name: 'cal' # sampler type: Contrastive Active Learning (CAL)
+  n_neighs: 10 # number of neighbors to be considered for CAL
+  neigh_dist: 'l2' # 
 #smp:
-#  name: 'cal_pca'
-#  n_neighs: 10
+#  name: 'random' # sampler type: Random
+#smp:
+#  name: 'cal_pca' # sampler type: Contrastive Active Learning (CAL) with Principal Component Analysis
+#  n_neighs: 10 # number of neighbors to be considered for CAL
 #  n_pca_comp: 32 # latent space dimension (should be consistent with others)
 #smp:
-#  optimizer: adam
-#  lr: 0.0005
-#  name: vaal
+#  name: vaal # sampler type: VAAL sampler with training
+#  optimizer: adam # optimizer for sampler 
+#  lr: 0.0005 # learning rate for sampler
 #  latent_dim: 32 # latent space dimension (should be consistent with others)
-#  n_sub_epochs: 1
+#  n_sub_epochs: 1 # number of epochs per each epoch of classifier
 
 # Run Hyperparameters
-batch_size: 128
-n_epochs: 100
+batch_size: 128 # batch size
+n_epochs: 100 # number of epochs 
 
 # Architecture
 
@@ -62,7 +73,7 @@ off_the_shelf_vae:
   im_height: 32
 
 cls: # classifier parameters
+  name: vaal # classifier type (vaal, vaal_with_latent, base)
   optimizer: sgd # classifier optimizer
   lr: 0.01 # learning rate of the optimizer
-  name: vaal_with_latent # classifier type (vaal, vaal_with_latent,)
-  z_dim: 256
+  z_dim: 32 # latent space dimension (should be consistent with others)

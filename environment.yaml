@@ -1,4 +1,4 @@
-name: dalcs
+name: dalcs # Deep Active Learning with Contrastive Learning 
 
 channels:
   - conda-forge

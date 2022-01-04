@@ -1,3 +1,16 @@
+"""
+Deep Active Learning with Contrastive Sampling
+
+Deep Learning Project for Deep Learning Course (263-3210-00L)  
+by Department of Computer Science, ETH Zurich, Autumn Semester 2021 
+
+Authors:  
+Sebastian Frey (sefrey@student.ethz.ch)  
+Remo Kellenberger (remok@student.ethz.ch)  
+Aron Schmied (aronsch@student.ethz.ch)  
+Guney Tombak (gtombak@student.ethz.ch)  
+"""
+
 import argparse
 from src.data import ActiveDataset
 from src.model import Net
@@ -63,8 +76,17 @@ if __name__ == "__main__":
     for config in cfg_list: # for each seed value, a config file has been created by config_lister
 
         # initializing Weights and Biases Run with the data from config data of specified yaml file
-        wandb.init(config=config, project="Deep Learning Project", entity="active_learners")
 
+        ########################################################
+        # Please set this part according to your preferences
+        ########################################################
+        wandb.init(config=config)
+        ########################################################
+        # To use offline: mode = 'offline'
+        # To disable    : mode = 'disabled'
+        # Run with a specific project name: project='<project_name>'
+        ########################################################
+        
         # renaming configuration in favor of ease
         cfg = wandb.config 
 
