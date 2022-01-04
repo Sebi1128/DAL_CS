@@ -1,4 +1,4 @@
-name: dlp
+name: dalcs
 
 channels:
   - conda-forge

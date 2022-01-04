@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
 
+# This code runs main.py for all the yaml files in a folder successively.
+
+# Usage:
+# chmod +x multi_main.sh
+# ./multi_main.sh -c <folder_path>
+
 # Parse options and extract values to variables
 while getopts "c:" opt; do
 	case ${opt} in

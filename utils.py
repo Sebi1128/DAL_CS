@@ -16,6 +16,10 @@ SAVE_DIR_PARAM = SAVE_DIR + 'param/'
 CONFIG_DIR = './config.py'
 
 def config_lister(config):
+    """
+    For more than one seed, config_lister creates a list of configurations
+    each with one of the seeds.
+    """
 
     if isinstance(config['seed'], int):
         cfg_list = [config]
@@ -30,7 +34,12 @@ def config_lister(config):
     return cfg_list
 
 def config_defaulter(cfg):
+    """
+    Regarding the default specifications of the datasets and models,
+    config_defaulter 
+    """
 
+    # check whether Variational Autoencoder Data is downloaded 
     check_vae_download()
 
     cfg.update({}, allow_val_change=True) 
@@ -47,22 +56,28 @@ def config_defaulter(cfg):
     
     return cfg
 
-
 def get_device(cfg, verbose=True):
-
-    if cfg.device.lower() in ['gpu', 'cuda']:
+    """
+    Setting the device for the run.
+    """
+    if cfg.device.lower() in ['gpu', 'cuda']: # GPU
+        # if gpu is wanted to be used and cuda is available 
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    else:
+    else: #CPU
         device = torch.device("cpu")
 
+    # updating the configuration
     cfg.update({'device': device}, allow_val_change=True) 
 
-    if verbose:
+    if verbose: # 
         print(f"Device is {cfg.device}")
 
     return cfg
 
 def dataset_parametrizer(cfg):
+    """
+    Setting model parameters according to the dataset.
+    """
 
     name = cfg.dataset['name']
 
@@ -97,11 +112,20 @@ def dataset_parametrizer(cfg):
     return cfg
 
 def check_vae_download():
+    """
+    Checking whether the variational autoencoder 
+    """
     if not os.path.isdir('./vae_training/pretrained_models'):
         download_vae()
 
 def seed_everything(seed: int):
+    """
+    Seeding everything for reproducibility. 
+    Unfortunately, the models become very slow on GPU with deterministic algorithms.
+    Hence, the method only works for the initial dataset partition but not for the models.
 
+    To enable the total reproducibility, remove the last two commented lines of the code.
+    """
     random.seed(seed)
     os.environ['PYTHONHASHSEED'] = str(seed)
     np.random.seed(seed)
@@ -110,14 +134,23 @@ def seed_everything(seed: int):
     light_seed(seed)
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
+
+    # os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":16:8:4096:2" # efficient but random
+
+    # To have total reproducibility, please remove the following two lines:
     # torch.use_deterministic_algorithms(True) It does not work with GPU
-    # os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":16:8:4096:2" # creates randomness
-    # os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:2" # creates inefficiency
+    # os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:2" # reproducible but inefficient    
     
     print(f"Seed has been set to {seed}...")
 
     
 class ModelWriter():
+    """
+    Custom model saver to the predefined folder with naming:
+    
+    save/param/<date>_<experiment_name>_<seed>_<W&B_ID>/<prefix>_weights.pth
+    It is 
+    """
     def __init__(self, cfg):
         self.name = wandb.run.name
         self.dir = './save/param/' + self.name + '/'
@@ -125,7 +158,6 @@ class ModelWriter():
         copyfile(CONFIG_DIR, self.dir + 'config.py')
 
     def write(self, model, prefix=''):
-        # maybe we should save epoch no too!
         # https://pytorch.org/tutorials/beginner/saving_loading_models.html
         torch.save(model.state_dict(), self.dir + prefix + 'weights.pth')
 

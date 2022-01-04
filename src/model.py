@@ -10,6 +10,9 @@ from src.base_models.classifiers import CLASSIFIER_DICT
 from src.base_models.samplers import SAMPLER_DICT
 
 class Net(nn.Module):
+    """
+    General model that uses base models defined in src/base_models
+    """
     def __init__(self, cfg):
         super().__init__()
         self.use_off_the_shelf_vae = cfg.embedding['use_off_the_shelf_vae']

@@ -49,7 +49,7 @@ def visualize_latent(model, active_dataset, cfg, run_no):
 
 
 
-def epoch_run(model, sampler, active_dataset, run_no, model_writer, cfg):
+def run(model, sampler, active_dataset, run_no, model_writer, cfg):
     pbar = tqdm(range(cfg.n_epochs))
     pbar.set_description("training")
 

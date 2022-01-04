@@ -7,7 +7,7 @@ import torch
 import numpy as np
 import random
 
-from src.utils import TRANSFORMS_DICT
+from src.training_utils import TRANSFORMS_DICT
 
 DATASETS_DICT = {
 	'cifar10'	: CIFAR10,
@@ -17,10 +17,10 @@ DATASETS_DICT = {
 }
 
 def torch_rp_bool(k:int, n:int):
-    '''
+    """
 	Gives a boolean array of size (n,) with 
  	randomly selected indices of k True, (n-k) False 
-    '''
+    """
     x = torch.zeros(n, dtype=bool)
     perm = torch.randperm(n)
     idx = perm[:k]
@@ -28,6 +28,7 @@ def torch_rp_bool(k:int, n:int):
     return x
 
 def seed_worker(worker_id):
+    """Taken from https://pytorch.org/docs/stable/notes/randomness.html"""
     worker_seed = torch.initial_seed() % 2**32
     np.random.seed(worker_seed)
     random.seed(worker_seed)
@@ -100,45 +101,52 @@ class ActiveDataset():
 			return TRANSFORMS_DICT[self.dataset_name.lower()]
 
 	def update(self, idx=list()):
-
-		if len(idx) > 0:
+		"""
+		Updating labeled and unlabeled set according to indices to be labeled set of training set.
+  		"""
+		if len(idx) > 0: # if the indices are not 
 			self.lbld_mask[idx] = True
 
-		#self.lbld_ratio = torch.sum(self.lbld_mask) / len(self.lbld_mask)
-		#RuntimeError: Integer division of tensors using div or / is no longer supported, and in a future release div will perform true division as in Python 3. Use true_divide or floor_divide (// in Python) instead.
+		# updating the ratio
 		self.lbld_ratio = torch.true_divide(torch.sum(self.lbld_mask), len(self.lbld_mask))
 
+		# updating labeled and unlabeled indices accordingly
 		lbld_idx = torch.where(self.lbld_mask)[0]
 		unlbld_idx = torch.where(torch.logical_not(self.lbld_mask))[0]
 
+		# constructing subsets 
 		self.labeled_trainset = Subset(self.trainset, lbld_idx)
 		self.unlabeled_trainset = Subset(self.trainset, unlbld_idx)
 
 	def get_loader(self, spec, batch_size, shuffle=True, num_workers=8):
-		if spec.lower() == 'train':
+		"""
+		Getting loader according to the desired sub-dataset
+  		"""
+		if spec.lower() == 'train': # training set
 			dataset = self.trainset
-		elif spec.lower() == 'test':
+		elif spec.lower() == 'test': # test set
 			dataset = self.testset
-		elif spec.lower() in ['valid', 'validation']:
+		elif spec.lower() in ['valid', 'validation']: # validation set
 			dataset = self.validset
-		elif spec.lower() == 'labeled':
+		elif spec.lower() == 'labeled': # labeled samples in training dataset
 			dataset = self.labeled_trainset
-		elif spec.lower() == 'unlabeled':
+		elif spec.lower() == 'unlabeled': # unlabeled samples in training dataset
 			dataset = self.unlabeled_trainset
-		elif spec.lower() == 'train_all':
+		elif spec.lower() == 'train_all': # training set + validation set
 			dataset = self.base_trainset
 		else:
 			sys.exit(f"No set known as {spec}, exiting...")
 
-		g = torch.Generator()
-		g.manual_seed(self.seed)
+		g = torch.Generator() # for reproducibility
+		g.manual_seed(self.seed) # for reproducibility
 
 		loader = DataLoader(dataset, 
                       	    batch_size=batch_size, 
                             shuffle=shuffle,
                             num_workers=num_workers,
-                            worker_init_fn=seed_worker,
-    						generator=g)
+                            worker_init_fn=seed_worker, # for reproducibility
+    						generator=g # for reproducibility
+          )
 
 		return loader
 
