@@ -30,6 +30,7 @@ python main.py --config <configuration_file_path>
 To run more than one configuration, `multi_main.sh` can be used with the path of the configuration files to be sequentially run.
 
 ```shell
+conda activate dalcs
 chmod +x multi_main.sh
 ./multi_main.sh -c <folder_path_containing_configuration_files>
 ```

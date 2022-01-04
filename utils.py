@@ -157,7 +157,6 @@ class ModelWriter():
         self.name = wandb.run.name
         self.dir = './save/param/' + self.name + '/'
         os.makedirs(self.dir)
-        copyfile(CONFIG_DIR, self.dir + 'config.py')
 
     def write(self, model, prefix=''):
         # https://pytorch.org/tutorials/beginner/saving_loading_models.html
