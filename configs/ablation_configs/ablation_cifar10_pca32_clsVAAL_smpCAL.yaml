@@ -1,37 +1,35 @@
-experiment_name: Initial_Test
+experiment_name: ablation_cifar10_pca32_clsVAAL_smpCAL
 
-seed: 42
+seed: 42, 26, 15
+visual_latent: false
 
 # Dataset and Active Learning
 dataset:
   name: cifar10
-  init_lbl_ratio: 0.1
+  init_lbl_ratio: 0.10
   val_ratio: 0.1
 
 update_ratio: 0.05
-n_runs: 9 # should be one more than the number of sampling updates
+n_runs: 5 # should be one more than the number of sampling updates
 
 device: gpu
 
 smp:
-  name: 'cal'
+  name: 'cal_pca'
   n_neighs: 10
-  neigh_dist: 'kldiv'
+  n_pca_comp: 32
 #smp:
 #  name: 'random'
-#smp:
-#  optimizer: adam
-#  lr: 0.0005
-#  name: vaal
-#  latent_dim: 32
-#  n_sub_epochs: 1
 
 # Run Hyperparameters
 batch_size: 128
 n_epochs: 100
 
 # Architecture
+
 embedding:
+  use_off_the_shelf_vae: true 
+  train_vae: false
   optimizer: adam
   lr: 0.0005
 enc:
@@ -42,6 +40,13 @@ dec:
 btk:
   name: vaal
   z_dim: 32
+
+off_the_shelf_vae:
+  load_from_checkpoint: null
+  latent_dim: 32
+  use_pretrained_cifar_enc: false
+  im_channels: 3
+  im_height: 32
 
 cls:
   optimizer: sgd

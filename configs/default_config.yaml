@@ -1,50 +1,80 @@
-experiment_name: Initial_Test
+# Deep Active Learning with Contrastive Sampling
+#
+# Deep Learning Project for Deep Learning Course (263-3210-00L)  
+# by Department of Computer Science, ETH Zurich, Autumn Semester 2021 
+#
+# Authors:  
+# Sebastian Frey (sefrey@student.ethz.ch)  
+# Remo Kellenberger (remok@student.ethz.ch)  
+# Aron Schmied (aronsch@student.ethz.ch)  
+# Guney Tombak (gtombak@student.ethz.ch)  
 
-seed: 42
+experiment_name: default_configuration
 
-# Dataset and Active Learning
+# more than one seed can be set 
+seed: 42, 26, 15
+
+# Dataset Configurations
 dataset:
-  name: cifar10
-  init_lbl_ratio: 0.1
-  val_ratio: 0.1
+  name: cifar10 # name of the dataset (cifar10, cifar100, mnist, fmnist)
+  init_lbl_ratio: 0.1 # initial labeled ratio
+  val_ratio: 0.1 # validation ratio
 
-update_ratio: 0.05
-n_runs: 9 # should be one more than the number of sampling updates
+update_ratio: 0.05 # update ratio between runs 
+n_runs: 9 # number of total runs 
+# should be one more than the number of sampling updates
 
-device: cpu
+# Device
+device: gpu
 
-#smp:
-#  name: 'cal'
-#  n_neighs: 10
-#  neigh_dist: 'kldiv'
+# Sampler Parameters
 smp:
-  name: 'random'
+  name: 'cal' # sampler type: Contrastive Active Learning (CAL)
+  n_neighs: 10 # number of neighbors to be considered for CAL
+  neigh_dist: 'l2' # 
 #smp:
-#  optimizer: adam
-#  lr: 0.0005
-#  name: vaal
-#  latent_dim: 32
-#  n_sub_epochs: 1
+#  name: 'random' # sampler type: Random
+#smp:
+#  name: 'cal_pca' # sampler type: Contrastive Active Learning (CAL) with Principal Component Analysis
+#  n_neighs: 10 # number of neighbors to be considered for CAL
+#  n_pca_comp: 32 # latent space dimension (should be consistent with others)
+#smp:
+#  name: vaal # sampler type: VAAL sampler with training
+#  optimizer: adam # optimizer for sampler 
+#  lr: 0.0005 # learning rate for sampler
+#  latent_dim: 32 # latent space dimension (should be consistent with others)
+#  n_sub_epochs: 1 # number of epochs per each epoch of classifier
 
 # Run Hyperparameters
-batch_size: 128
-n_epochs: 100
+batch_size: 128 # batch size
+n_epochs: 100 # number of epochs 
 
 # Architecture
-embedding:
-  optimizer: adam
-  lr: 0.0005
-enc:
-  name: vaal
-dec:
-  name: vaal
-  kld_weight: 1
-btk:
-  name: vaal
-  z_dim: 32
 
-cls:
-  optimizer: sgd
-  lr: 0.01
-  name: vaal
-  z_dim: 32
+embedding:
+  use_off_the_shelf_vae: true # whether a pretrained VAE to be used or not
+  train_vae: false # VAE to be trained or not
+  optimizer: adam # optimizer for VAE training
+  lr: 0.0005 # learning rate for VAE training
+enc:
+  name: vaal # encoder type
+dec:
+  name: vaal # decoder type
+  kld_weight: 1 # weighting of the kl divergence against the reconstruction loss
+btk:
+  name: vaal # bottleneck type
+  z_dim: 32 # latent space dimension (should be consistent with others)
+
+off_the_shelf_vae: # parameters for pretrained VAE
+  load_from_checkpoint: null # loading from a pretrained version
+  latent_dim: 32 # latent dimension
+  use_pretrained_cifar_enc: false # If use_pretrained_cifar_enc is true, the VAE will reuse the weights 
+  # from the pretrained model available from torch lightning bolt in the encoder
+  im_channels: 3 # number of input image channels 
+  im_height: 32 
+
+cls: # classifier parameters
+  name: vaal # classifier type (vaal, vaal_with_latent, base)
+  optimizer: sgd # classifier optimizer
+  lr: 0.01 # learning rate of the optimizer
+  z_dim: 32 # latent space dimension (should be consistent with others)

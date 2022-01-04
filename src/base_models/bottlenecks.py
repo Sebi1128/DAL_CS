@@ -1,11 +1,23 @@
-from collections import OrderedDict
-from torch.nn import functional as F
+"""
+Deep Active Learning with Contrastive Sampling
+
+Deep Learning Project for Deep Learning Course (263-3210-00L)  
+by Department of Computer Science, ETH Zurich, Autumn Semester 2021 
+
+Authors:  
+Sebastian Frey (sefrey@student.ethz.ch)  
+Remo Kellenberger (remok@student.ethz.ch)  
+Aron Schmied (aronsch@student.ethz.ch)  
+Guney Tombak (gtombak@student.ethz.ch)  
+"""
+
 from torch import nn
 import torch
 from .model_utils import kaiming_init
 
 
 class Bottleneck(nn.Module):
+    """Parent class for Bottleneck"""
     def __init__(self, cfg_btk):
         super(Bottleneck, self).__init__()
 
@@ -22,6 +34,7 @@ class Bottleneck(nn.Module):
 
 
 class Base_Bottleneck(Bottleneck):
+    """A dummy bottleneck class with two fully connected layers for testing"""
     def __init__(self, cfg_btk):
         super(Base_Bottleneck, self).__init__(cfg_btk)
 
@@ -47,6 +60,7 @@ class Base_Bottleneck(Bottleneck):
 
 
 class VAAL_Bottleneck(Bottleneck):
+    """VAAL Bottleneck from https://github.com/sinhasam/vaal"""
     def __init__(self, cfg_btk):
         super(VAAL_Bottleneck, self).__init__(cfg_btk)
         self.z_dim = cfg_btk['z_dim']

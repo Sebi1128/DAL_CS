@@ -1,3 +1,16 @@
+"""
+Deep Active Learning with Contrastive Sampling
+
+Deep Learning Project for Deep Learning Course (263-3210-00L)  
+by Department of Computer Science, ETH Zurich, Autumn Semester 2021 
+
+Authors:  
+Sebastian Frey (sefrey@student.ethz.ch)  
+Remo Kellenberger (remok@student.ethz.ch)  
+Aron Schmied (aronsch@student.ethz.ch)  
+Guney Tombak (gtombak@student.ethz.ch)  
+"""
+
 from collections import OrderedDict
 from torch.nn import functional as F
 from torch import nn
@@ -17,16 +30,23 @@ model_urls = {
 
 
 class Classifier_VAAL(nn.Module):
+    """
+    The classifier described in the VAAL from https://github.com/sinhasam/vaal
 
+    Additionally, we added vaal_with_latent part to use latent from the variational 
+    autoencoder as an additional input for the linear network after VGG16.
+    """
     def __init__(self, cfg_cls):
         super(Classifier_VAAL, self).__init__()
         self.cfg_cls = cfg_cls
-        self.output_size =  self.cfg_cls['output_size']
+        self.output_size = self.cfg_cls['output_size']
         # Make CNN layers of VGG16 with batch normalization
-        self.features = make_layers(cfgs['D'], batch_norm=True)
+        self.features = make_layers(cfgs['D'], batch_norm=True, 
+                                    in_channels=self.cfg_cls['in_channels'])
         self.avgpool = nn.AdaptiveAvgPool2d((7, 7))
 
-        if self.cfg_cls['name'] == 'vaal_with_latent':
+        if self.cfg_cls['name'] == 'vaal_with_latent': 
+            # addition of the latent variable (mu) to the bottleneck input
             self.classifier = nn.Sequential(
                 nn.Linear(512 * 7 * 7 +  self.cfg_cls['z_dim'], 4096),
                 nn.ReLU(True),
@@ -80,9 +100,8 @@ class Classifier_VAAL(nn.Module):
                 nn.init.constant_(m.bias, 0)
 
 
-def make_layers(cfg_layer, batch_norm=False):
-    layers = []
-    in_channels = 3
+def make_layers(cfg_layer, batch_norm=False, in_channels=3):
+    layers = list()
     for v in cfg_layer:
         if v == 'M':
             layers += [nn.MaxPool2d(kernel_size=2, stride=2)]
@@ -104,8 +123,8 @@ cfgs = {
 }
 
 
-# Dummy Classifier
-class Base_Classifier_Dummy(nn.Module):
+class Base_Classifier(nn.Module):
+    """"""
     def __init__(self, cfg_cls):
         super().__init__()
         self.cfg_cls = cfg_cls
@@ -125,8 +144,5 @@ class Base_Classifier_Dummy(nn.Module):
         c = F.log_softmax(z, dim=1)
         return c
 
-CLASSIFIER_DICT = {
-    'vaal': Classifier_VAAL,
-    'vaal_with_latent': Classifier_VAAL,
-    'base': Base_Classifier_Dummy
-}
+# dictionary containing classifier classes
+CLASSIFIER_DICT = {'vaal': Classifier_VAAL, 'vaal_with_latent': Classifier_VAAL, 'base': Base_Classifier}

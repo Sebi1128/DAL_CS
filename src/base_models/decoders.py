@@ -1,9 +1,21 @@
+"""
+Deep Active Learning with Contrastive Sampling
+
+Deep Learning Project for Deep Learning Course (263-3210-00L)  
+by Department of Computer Science, ETH Zurich, Autumn Semester 2021 
+
+Authors:  
+Sebastian Frey (sefrey@student.ethz.ch)  
+Remo Kellenberger (remok@student.ethz.ch)  
+Aron Schmied (aronsch@student.ethz.ch)  
+Guney Tombak (gtombak@student.ethz.ch)  
+"""
+
 from collections import OrderedDict
 from torch.nn import functional as F
 from torch import nn
 import torch
 from functools import partial
-from pytorch_lightning.core.lightning import LightningModule
 from .model_utils import kaiming_init
 
 
@@ -31,12 +43,13 @@ class Base_Decoder(nn.Module):
 
 
 class VAAL_Decoder(nn.Module):
+    """VAAL Decoder from https://github.com/sinhasam/vaal"""
     def __init__(self, cfg_dec):
         super(VAAL_Decoder, self).__init__()
         self.kld_weight = cfg_dec['kld_weight']
 
         hidden_dims = [1024, 512, 256, 128]
-        out_channels = 3
+        out_channels = cfg_dec['out_channels']
         layers = []
         for i in range(len(hidden_dims) - 1):
             layers.append(
@@ -89,5 +102,5 @@ def vae_loss(recon, x, *args, **kwargs):
     loss = recons_loss + kld_weight * kld_loss
     return {'loss': loss, 'reconstruction_loss': recons_loss}
 
-
+# dictionary containing decoder classes
 DECODER_DICT = {"base": Base_Decoder, "vaal": VAAL_Decoder}
