@@ -1,4 +1,4 @@
-name: dalcs # Deep Active Learning with Contrastive Learning 
+name: dalcs # Deep Active Learning with Contrastive Sampling 
 
 channels:
   - conda-forge
@@ -19,4 +19,5 @@ dependencies:
   - pip:
     - pickle5
     - wandb
+    - lightning-bolts
 

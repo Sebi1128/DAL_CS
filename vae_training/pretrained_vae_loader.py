@@ -33,12 +33,16 @@ def download_vae():
     if not os.path.exists(path):
         os.makedirs(path)
 
-    for link in links:
-        print("load ", link)
+    print("Downloading pretrained variational autoencoder parameters...\n", 
+          "It is a part of the setup process and might take a while.")
+
+    for k, link in enumerate(links):
+        print(f"{k+1}/{len(links)} loading: ", link)
         r = requests.get(link)
-        print("unpack ", link)
+        print(f"{k+1}/{len(links)} unpacking: ", link)
         z = zipfile.ZipFile(io.BytesIO(r.content))
         z.extractall(path)
 
 if __name__ == "__main__":
     download_vae()
+

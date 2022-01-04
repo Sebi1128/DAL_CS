@@ -52,25 +52,26 @@ n_epochs: 100 # number of epochs
 # Architecture
 
 embedding:
-  use_off_the_shelf_vae: true # if set to true -> set train_vae to false and z_dim in cls to 256 !!!! Also do not use VAAL sampler
-  train_vae: false
-  optimizer: adam
-  lr: 0.0005
+  use_off_the_shelf_vae: true # whether a pretrained VAE to be used or not
+  train_vae: false # VAE to be trained or not
+  optimizer: adam # optimizer for VAE training
+  lr: 0.0005 # learning rate for VAE training
 enc:
-  name: vaal
+  name: vaal # encoder type
 dec:
-  name: vaal
-  kld_weight: 1
+  name: vaal # decoder type
+  kld_weight: 1 # weighting of the kl divergence against the reconstruction loss
 btk:
-  name: vaal
+  name: vaal # bottleneck type
   z_dim: 32 # latent space dimension (should be consistent with others)
 
-off_the_shelf_vae:
-  load_from_checkpoint: null
-  latent_dim: 32
-  use_pretrained_cifar_enc: false
-  im_channels: 1
-  im_height: 32
+off_the_shelf_vae: # parameters for pretrained VAE
+  load_from_checkpoint: null # loading from a pretrained version
+  latent_dim: 32 # latent dimension
+  use_pretrained_cifar_enc: false # If use_pretrained_cifar_enc is true, the VAE will reuse the weights 
+  # from the pretrained model available from torch lightning bolt in the encoder
+  im_channels: 3 # number of input image channels 
+  im_height: 32 
 
 cls: # classifier parameters
   name: vaal # classifier type (vaal, vaal_with_latent, base)
