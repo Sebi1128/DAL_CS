@@ -29,13 +29,13 @@ conda install pytorch torchvision torchaudio cudatoolkit=X.Y -c pytorch -c conda
 
 with a cuda version X.Y compatible with your GPU.
 
-Before running, you should login to your wandb (Weights and Biases) account:
+Before running, you should log in to your wandb (Weights and Biases) account:
 
 ```shell
 wandb login
 ```
 
-You can change the parameters regarding Weights and Biases in `main.py` at line `70`.
+You can change the parameters regarding Weights and Biases in `main.py` at line `83`.
 
 For more information, please visit [Weights and Biases](https://wandb.ai).
 
@@ -61,10 +61,10 @@ An explanatory configuration file can be found at `configs/default_config.yaml`.
 
 ### Results by Weights and Biases
 
-The results are saved in both your local device in the folder named `wandb` and also Weights and Biases cloud. You can inspect the results directly on web or to use the local files, please check the [documentation](https://docs.wandb.ai/guides/track/public-api-guide) and code `visualization/plot_results.ipynb`.
+The results are saved in both your local device in the folder named `wandb` and also the Weights and Biases cloud. You can inspect the results directly on web or to use the local files, please check the [documentation](https://docs.wandb.ai/guides/track/public-api-guide) and `visualization/plot_results.ipynb`.
 
 ### Variational Autoencoder Training
-The code also contains a seperate variational autoencoder trainer to use pretrained models.
+The code also contains a separate variational autoencoder trainer to use pretrained models.
 
 To use it, set your current directory to `vae_training`. Usage is similar to the main file:
 

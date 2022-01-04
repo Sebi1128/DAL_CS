@@ -18,7 +18,7 @@ from .model_utils import kaiming_init
 
 
 class VAAL_Encoder(nn.Module):
-    """The encoder described in the """
+    """VAAL Encoder from https://github.com/sinhasam/vaal"""
     def __init__(self, cfg_enc):
         super(VAAL_Encoder, self).__init__()
 

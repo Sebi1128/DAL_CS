@@ -66,7 +66,7 @@ if __name__ == "__main__":
     parser.add_argument('--config', help='path to config file', default='configs/default_config.yaml')
     args = parser.parse_args()
 
-    # getting parameters from the defined config.yaml file
+    # load parameters from the defined configuration yaml file
     with open(args.config) as file:
         config = yaml.load(file, Loader=yaml.FullLoader)
 

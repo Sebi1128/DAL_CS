@@ -43,6 +43,7 @@ class Base_Decoder(nn.Module):
 
 
 class VAAL_Decoder(nn.Module):
+    """VAAL Decoder from https://github.com/sinhasam/vaal"""
     def __init__(self, cfg_dec):
         super(VAAL_Decoder, self).__init__()
         self.kld_weight = cfg_dec['kld_weight']

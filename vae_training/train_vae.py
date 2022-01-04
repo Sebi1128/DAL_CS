@@ -27,6 +27,9 @@ from get_model import get_model
 
 
 def get_dataset(cfg):
+    """
+    Dataset returner with corresponding transforms
+    """
     res = None
 
     transforms = []
@@ -160,14 +163,20 @@ def get_dataset(cfg):
     return res
 
 def train(cfg):
+    """
+    Training variational autoencoders to be used in active learning.
+    
+    """
     run_name = cfg['run_name']
     experiment_name = run_name + datetime.now().strftime("_%d-%m-%Y_%H-%M-%S")
 
+    # initializing the Variational AutoEncoder
     wandb_logger = WandbLogger(project="VAE_training")
     wandb_logger.experiment.name = experiment_name + '_' + wandb_logger.experiment.id
     wandb_logger.experiment.config.update(cfg)
 
-    callbacks = []
+    # setting callbacks for training
+    callbacks = list()
     callbacks += [EarlyStopping(monitor="val_loss", min_delta=0.00, patience=5, verbose=False, mode="min")]
     callbacks += [ModelCheckpoint(
         monitor='val_loss',
@@ -176,6 +185,7 @@ def train(cfg):
     )]
     callbacks += [LearningRateMonitor(logging_interval="step")]
 
+    # generating trainer object of pytorch lightning
     trainer = Trainer(
         progress_bar_refresh_rate=10,
         max_epochs=cfg['n_epochs'],
@@ -186,10 +196,11 @@ def train(cfg):
         strategy=cfg['strategy']
     )
 
+    # getting model defined in configuration
     vae = get_model(cfg['vae'])
-
+    # getting dataset defined in configuration
     dataset = get_dataset(cfg['dataset'])
-
+    # training the model
     trainer.fit(vae, **dataset)
 
 if __name__ == '__main__':
@@ -197,6 +208,7 @@ if __name__ == '__main__':
     parser.add_argument('--config', help='path to config file', default='configs/CIFAR10_vae.yaml')
     args = parser.parse_args()
 
+    # load parameters from the defined configuration yaml file
     with open(args.config) as file:
         config = yaml.load(file, Loader=yaml.FullLoader)
 

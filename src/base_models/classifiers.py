@@ -31,7 +31,7 @@ model_urls = {
 
 class Classifier_VAAL(nn.Module):
     """
-    The classifier described in the VAAL paper, 
+    The classifier described in the VAAL from https://github.com/sinhasam/vaal
 
     Additionally, we added vaal_with_latent part to use latent from the variational 
     autoencoder as an additional input for the linear network after VGG16.

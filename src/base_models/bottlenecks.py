@@ -60,7 +60,7 @@ class Base_Bottleneck(Bottleneck):
 
 
 class VAAL_Bottleneck(Bottleneck):
-    
+    """VAAL Bottleneck from https://github.com/sinhasam/vaal"""
     def __init__(self, cfg_btk):
         super(VAAL_Bottleneck, self).__init__(cfg_btk)
         self.z_dim = cfg_btk['z_dim']

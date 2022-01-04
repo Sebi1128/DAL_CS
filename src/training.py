@@ -94,39 +94,48 @@ def train_epoch(model, sampler, active_data, batch_size, device, train_vae=True)
     # getting iteration schedule 
     iter_schedule = active_data.get_itersch(uniform=False)
 
+    # getting the labeled, unlabeled, and training datasets
     lbld_DL = active_data.get_loader('labeled', batch_size=batch_size)
     unlbld_DL = active_data.get_loader('unlabeled', batch_size=batch_size)
     all_DL = active_data.get_loader('train', batch_size=batch_size)
 
+    # constructing iterators of dataset loaders
     lbl_iter = iter(lbld_DL)
     unlbl_iter = iter(unlbld_DL)
     all_iter = iter(all_DL)
 
+    # calculating number of iterations needed
     n_iters = len(active_data.trainset) // batch_size
-    c_losses = list()
-    r_losses = list()
-    se_losses = list()
-    ss_losses = list()
 
+    # lists for losses: classification, reconstruction, 
+    # generative and discriminative sampler (VAAL sampler)
+    c_losses, r_losses, se_losses, ss_losses = list(), list(), list(), list()
+
+    # setting the progress bar
     pbar = tqdm(iter_schedule[:n_iters], leave=False)
     pbar.set_description("iterations of epoch")
     for is_labeled in pbar:
-        if is_labeled:
-            try:
+        if is_labeled: # if the sample is labeled
+            try: # the iteration schedule sometimes become longer than expected
                 x, t = next(lbl_iter)
-            except:
+            except: # if there is no more (sample, target) pair, just continue
                 continue
+
+            # transforming data to device and classify
             x = x.to(device)
             t = t.to(device)
             c = model.classify(x)
+
+            # computing classification loss
             loss = model.c_loss(c, t)
             c_losses.append(float(loss))
 
+            # backpropagation and step
             model.optimizer_classifier.zero_grad()
             loss.backward()
             model.optimizer_classifier.step()
 
-            if train_vae:
+            if train_vae: # if VAE is trainable
                 if sampler.trainable:
                     x_unlabeled, _ = next(unlbl_iter)
                     x_unlabeled = x_unlabeled.to(device)
@@ -137,23 +146,33 @@ def train_epoch(model, sampler, active_data, batch_size, device, train_vae=True)
                     loss = sampler.model_loss(sampler_out)
                     se_losses.append(float(loss))
 
+                    # backpropagation and step
                     model.optimizer_embedding.zero_grad()
                     loss.backward()
                     model.optimizer_embedding.step()
         else:
-            if train_vae:
-                x, _ = next(all_iter)
+            if train_vae: # if the sample is unlabeled
+                try: # the iteration schedule sometimes become longer than expected
+                    x, _ = next(all_iter)  # take all training set without target values
+                except: # if there is no more (sample, _) pair, just continue
+                    continue
+
+                # transforming data to device and reconstruct
                 x = x.to(device)
                 r, latent = model.reconstruct(x)
+
+                # computing reconstruction loss
                 loss = model.r_loss(r.flatten(), x.flatten(), *latent[1:])['loss']
                 r_losses.append(float(loss))
 
+                # backpropagation and step
                 model.optimizer_embedding.zero_grad()
                 loss.backward()
                 model.optimizer_embedding.step()
 
     # sampler (discriminator) is trained separately (unlike vaal) from generator (as suggested for GAN)
     if sampler.trainable:
+        """Discriminative sampler training of VAAL"""
         lbld_DL = active_data.get_loader('labeled', batch_size=batch_size)
         unlbld_DL = active_data.get_loader('unlabeled', batch_size=batch_size)
 
@@ -178,10 +197,12 @@ def train_epoch(model, sampler, active_data, batch_size, device, train_vae=True)
                 loss = sampler.sampler_loss(sampler_out)
                 ss_losses.append(float(loss))
 
+                # backpropagation and step
                 sampler.optimizer.zero_grad()
                 loss.backward()
                 sampler.optimizer.step()
 
+    # log the training losses
     result = {
         'classification_loss_train': torch.mean(torch.tensor(c_losses)),
         'reconstruction_loss_train': torch.mean(torch.tensor(r_losses)),
@@ -202,11 +223,12 @@ def validate_epoch(model, active_data, batch_size, device, train_vae=True):
     valid_DL = active_data.get_loader('validation', batch_size=batch_size)
 
     
-    c_losses = list()
-    r_losses = list()
+    c_losses, r_losses = list(), list()
 
-    correct = 0
-    total = 0
+    # setting counters for validation accuracy
+    correct, total = 0, 0
+
+    # count number of true guesses
     for x, t in valid_DL:
         x = x.to(device)
         t = t.to(device)
@@ -217,30 +239,37 @@ def validate_epoch(model, active_data, batch_size, device, train_vae=True):
         correct += (c.argmax(1) == t).sum()
         total += len(t)
 
-        if train_vae:
+        if train_vae: # if VAE is trainable, log the loss
             r, latent = model.reconstruct(x)
             loss = model.r_loss(r.flatten(), x.flatten(), *latent[1:])['loss']
             r_losses.append(loss)
 
+    # return classification and reconstruction losses with accuracy
     result = {
         'classification_loss_val': torch.mean(torch.tensor(c_losses)),
         'reconstruction_loss_val': torch.mean(torch.tensor(r_losses)),
     }
     return result, torch.true_divide(correct, total) * 100
-    #return result, correct / total * 100
 
 
 def test_epoch(model_actual, active_data, batch_size, device, model_writer, load_prefix=None):
+    # constructing dataset loader for testing
     test_DL = active_data.get_loader('test', batch_size=batch_size)
 
+    # copying model to not change the parameters of the main by loading
     model = deepcopy(model_actual)
 
-    if load_prefix is not None:
+    if load_prefix is not None: # loading model parameters
         model_writer.load(model, prefix=load_prefix)
-    
-    correct = 0
-    total = 0
 
+    # enabling evaluation mode
+    model.eval()
+    torch.set_grad_enabled(False)
+
+    # setting counters for test accuracy
+    correct, total = 0, 0
+
+    # count number of true guesses
     for x, t in test_DL:
         x = x.to(device)
         t = t.to(device)
@@ -249,5 +278,6 @@ def test_epoch(model_actual, active_data, batch_size, device, model_writer, load
         correct += (c.argmax(1) == t).sum()
         total += len(t)
 
+    # return accuracy
     return correct / total * 100
 

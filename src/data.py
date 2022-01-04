@@ -49,10 +49,10 @@ def seed_worker(worker_id):
 
 class ActiveDataset():
     """
-    A custom dataset which can be updated. The dataset consists of four disjoint sub-datasets:
+    A custom dataset consists of four disjoint sub-datasets:
     Training: (Labeled, Unlabeled), Validation, Test
 
-    
+    The 
     """
     def __init__(self, name, 
                  path=None, init_lbl_ratio=0.1,
@@ -67,9 +67,9 @@ class ActiveDataset():
         self.transform = self._get_transform(transform)
         self.seed = seed
 
-        self._take_datasets() # take the datasets from the 
-        self._init_mask(init_lbl_ratio, val_ratio)
-        self.update() # updating with the default set
+        self._take_datasets() # take the datasets from the corresponding torchvision loader 
+        self._init_mask(init_lbl_ratio, val_ratio) # set initial self.lbld_mask
+        self.update() # updating with the default set defined by self.lbld_mask
 
         self.iter_schedule = self.get_itersch()
 
@@ -77,15 +77,19 @@ class ActiveDataset():
         if (val_ratio + init_lbl_ratio) > 1.0:
             sys.exit('The validation and initialization ratio sum should be less than 1.0!')
 
+        # defining initial labeled ratio and validation ratio
         self.init_ratio = init_lbl_ratio
         self.val_ratio = val_ratio
-        
+
+        # number of samples in base trainset (every sample other than the test ones)
         n_btra = len(self.base_trainset)
 
+        # number of samples for validation, training, and labeled training datasets
         n_val = int(n_btra * val_ratio)
         n_tra = int(n_btra - n_val)
         n_lbl = int(n_btra * init_lbl_ratio)
 
+        # generating random validation and training sets
         self.val_mask = torch_rp_bool(n_val, n_btra)
         val_idx = torch.where(self.val_mask)[0]
         tra_idx = torch.where(torch.logical_not(self.val_mask))[0]
@@ -93,12 +97,14 @@ class ActiveDataset():
         self.validset = Subset(self.base_trainset, val_idx)
         self.trainset = Subset(self.base_trainset, tra_idx)
 
+        # defining the indices corresponding to labeled samples in training set
         self.lbld_mask = torch_rp_bool(n_lbl, n_tra)
 
 
     def _take_datasets(self):
         """
-
+        Returns datasets from the corresponding torchvision loader
+        Datasets: CIFAR10, CIFAR100, MNIST, Fashion MNIST
         """
         DATASET = DATASETS_DICT[self.dataset_name]
 
@@ -112,7 +118,7 @@ class ActiveDataset():
                                         transform=self.transform)
 
     def _get_transform(self, transform):
-
+        """Get the transforms defined for the datasets"""
         if isinstance(transform, str):
             if transform not in TRANSFORMS_DICT.keys():
                 print(f'No transform known as {transform}')
@@ -175,22 +181,37 @@ class ActiveDataset():
         return loader
 
     def get_itersch(self, uniform=True, setL=None, setU=None):
+        """
+        Get iteration schedule (in an epoch)
 
+        The method is mainly required to define whether the training (for reconstruction) 
+        or labeled training (for classification) set to be   
+        
+        Generates an iterative module for training in favor of a homogeneous training procedure.
+        First, it finds the smallest ratio between number of elements in setL and setU.
+        e.g.: |setL | = 4, |setU| = 12 -> a = 1, b = 3 -> seq_len = 4
+
+        The method is not reliable always. For caution, we used it with try/except 
+        """
+        
         setL = self.labeled_trainset if setL is None else setL
+
         # realize that we can use whole dataset as unlabeled
         setU = self.trainset if setU is None else setU 
-        
+
+        # finding simplest ratio using greatest common divider
         gcdLU = math.gcd(len(setL), len(setU))
         a, b = len(setL) // gcdLU, len(setU) // gcdLU
 
+        # defining sequence length
         seq_len = a + b
         n_seq = len(setL + setU) // seq_len
 
         stack = torch.zeros(n_seq, seq_len, dtype=bool)
 
-        if uniform:
+        if uniform: # if uniform, for each subset of a + b, the latest a of them are labeled 
             stack[:,:a] = True
-        else:
+        else: # if not uniform, a labeled ones are randomly given in sequence of length a + b
             for k in range(n_seq):
                 stack[k,:] = torch_rp_bool(a, seq_len)
 
