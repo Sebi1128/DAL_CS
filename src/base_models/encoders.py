@@ -7,11 +7,12 @@ from torch.nn.modules.batchnorm import BatchNorm2d
 
 
 class VAAL_Encoder(nn.Module):
+    """The encoder described in the """
     def __init__(self, cfg_enc):
         super(VAAL_Encoder, self).__init__()
 
         hidden_dims = [128, 256, 512, 1024]
-        in_channels = 3
+        in_channels = cfg_enc['in_channels']
         layers = []
         for dim in hidden_dims:
             layers.append(
@@ -35,12 +36,14 @@ class VAAL_Encoder(nn.Module):
 
 
 class Base_Encoder(nn.Module):
+    """A dummy encoder class with two convolutional layers for testing"""
     def __init__(self, cfg_enc):
         super(Base_Encoder, self).__init__()
 
         self.input_size = cfg_enc['input_size']
+        in_channels = cfg_enc['in_channels']
         self.encoder = nn.Sequential(OrderedDict([
-            ('conv1', nn.Conv2d(3, 20, 5, padding=2)),
+            ('conv1', nn.Conv2d(in_channels, 20, 5, padding=2)),
             ('relu1', nn.ReLU()),
             ('conv2', nn.Conv2d(20, 64, 5, padding=2)),
             ('relu2', nn.ReLU()),
@@ -49,5 +52,5 @@ class Base_Encoder(nn.Module):
     def forward(self, x):
         return self.encoder(x)
 
-
+# dictionary containing encoder classes
 ENCODER_DICT = {"base": Base_Encoder, "vaal": VAAL_Encoder}

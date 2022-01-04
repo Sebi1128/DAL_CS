@@ -12,18 +12,24 @@ from src.base_models.samplers import SAMPLER_DICT
 class Net(nn.Module):
     """
     General model that uses base models defined in src/base_models
+    The structure of the Net consists of 4 (+1) units:
+        - Encoder: Which serves as the encoder part of a defined variational autoencoder 
+        - Decoder: Which serves as the decoder part of a defined variational autoencoder
+        - Bottleneck: The connection between encoder and decoder, which outputs latent space 
+        - Classifier: The method classifies the samples 
+                      using sample itself, latent space, and bottleneck output
     """
     def __init__(self, cfg):
         super().__init__()
         self.use_off_the_shelf_vae = cfg.embedding['use_off_the_shelf_vae']
-        if self.use_off_the_shelf_vae:
+        if self.use_off_the_shelf_vae: # Using pretrained Variational Autoencoder
             vae = VAEWrapper(cfg)
             self.encoder = vae.get_encoder()
             # e -> b, z
             self.bottleneck = vae.get_bottleneck()
             # b -> r
             self.decoder = vae.get_decoder()
-        else:
+        else: # Using Variational Autoencoder with online training
             # x -> e
             self.encoder = ENCODER_DICT[cfg.enc['name']](cfg.enc)
             # e -> b, z
@@ -32,11 +38,12 @@ class Net(nn.Module):
             self.decoder = DECODER_DICT[cfg.dec['name']](cfg.dec)
             # b -> c
         self.classifier = CLASSIFIER_DICT[cfg.cls['name']](cfg.cls)
-        #summary(self.classifier, input_size=(3, 32, 32))
 
+        # defining two types of loss functions: classification and reconstruction
         self.c_loss = self.classifier.loss
         self.r_loss = self.decoder.loss
 
+        # defining optimizer and learning rate both for reconstruction and classifier
         optimizers = {'adam': optim.Adam, 'sgd': optim.SGD}
         self.optimizer_embedding = optimizers[cfg.embedding['optimizer'].lower()](
             list(self.encoder.parameters()) + list(self.bottleneck.parameters()) + list(self.decoder.parameters()),
@@ -73,16 +80,28 @@ class Net(nn.Module):
         return latent, r, c
 
     def latent(self, x):
+        """
+        Returns the latent variable 
+        constructed by the encoder part of the defined VAE
+        """
         latent, _, _ = self.forward(x, classify=False, reconstruct=False)
         z = latent[0]
         return z
 
     def latent_mu(self, x):
+        """
+        Returns the mean of the latent variable 
+        constructed by the encoder part of the defined VAE
+        """
         latent, _, _ = self.forward(x, classify=False, reconstruct=False)
         mu = latent[1]
         return mu
 
     def latent_param(self, x):
+        """
+        Returns the mean and logvar of the latent variable 
+        constructed by the encoder part of the defined VAE
+        """
         latent, _, _ = self.forward(x, classify=False, reconstruct=False)
         mu = latent[1]
         logvar = latent[2]
@@ -90,9 +109,15 @@ class Net(nn.Module):
 
 
     def reconstruct(self, x):
+        """
+        Returns the reconstruction result by the defined VAE
+        """
         latent, r, _ = self.forward(x, classify=False)
         return r, latent
 
     def classify(self, x):
+        """
+        Returns the classification result
+        """
         _, _, c = self.forward(x, reconstruct=False)
         return c

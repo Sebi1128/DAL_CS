@@ -3,6 +3,7 @@ from torch import nn
 from vae_training.get_model import get_model
 
 class VAEWrapper(nn.Module):
+    """Wrapper for pretrained models to be used in our framework"""
     def __init__(self, cfg):
         super(VAEWrapper, self).__init__()
         self.cfg = cfg
@@ -24,6 +25,7 @@ class VAEWrapper(nn.Module):
 
 
 class EncoderWrapper(nn.Module):
+    """Encoder Wrapper for pretrained models to be used in our framework"""
     def __init__(self, cfg_enc, encoder):
         super(EncoderWrapper, self).__init__()
         self.cfg_enc = cfg_enc
@@ -34,6 +36,7 @@ class EncoderWrapper(nn.Module):
 
 
 class DecoderWrapper(nn.Module):
+    """Decoder Wrapper for pretrained models to be used in our framework"""
     def __init__(self, cfg_dec, decoder):
         super(DecoderWrapper, self).__init__()
         self.cfg_dec = cfg_dec
@@ -45,6 +48,7 @@ class DecoderWrapper(nn.Module):
 
 
 class BottleneckWrapper(nn.Module):
+    """Bottleneck Wrapper for pretrained models to be used in our framework"""
     def __init__(self, cfg_bot, fc_mu, fc_var, sample):
         super(BottleneckWrapper, self).__init__()
         self.cfg_bot = cfg_bot

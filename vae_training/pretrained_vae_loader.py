@@ -5,6 +5,9 @@ import io
 import os
 
 def download_vae():
+    """
+    Downloading pretrained variational autoencoder parameters
+    """
 
     path = 'vae_training/pretrained_models'
 

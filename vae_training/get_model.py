@@ -16,7 +16,6 @@ def get_model(cfg):
         vae.decoder.conv1 = Conv2d(64, cfg['im_channels'], kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
 
     if cfg['load_from_checkpoint'] is not None:
-        #vae.load_from_checkpoint(checkpoint_path=cfg['load_from_checkpoint'])
         checkpoint = torch.load(cfg['load_from_checkpoint'], map_location='cpu')
         vae.load_state_dict(checkpoint['state_dict'])
     return vae

@@ -1,33 +1,37 @@
-experiment_name: Initial_Test
+experiment_name: default_configuration
 
-seed: 42
+# more than one seed can be set 
+seed: 42, 26, 15
 
-# Dataset and Active Learning
+# Dataset Configurations
 dataset:
-  name: cifar10
-  init_lbl_ratio: 0.1
-  val_ratio: 0.1
+  name: cifar10 # name of the dataset (cifar10, cifar100, mnist, fmnist)
+  init_lbl_ratio: 0.1 # initial labeled ratio
+  val_ratio: 0.1 # validation ratio
 
-update_ratio: 0.05
-n_runs: 9 # should be one more than the number of sampling updates
+update_ratio: 0.05 # update ratio between runs 
+n_runs: 9 # number of total runs 
+# should be one more than the number of sampling updates
 
-device: cpu
+# Device
+device: gpu
 
+# Sampler Parameters
 #smp:
-#  name: 'cal'
-#  n_neighs: 10
-#  neigh_dist: 'kldiv'
+#  name: 'cal' # sampler type: Contrast
+#  n_neighs: 10 # number of neighbors to be considered for CAL
+#  neigh_dist: 'kldiv' # 
 smp:
   name: 'random'
 #smp:
 #  name: 'cal_pca'
 #  n_neighs: 10
-#  n_pca_comp: 32
+#  n_pca_comp: 32 # latent space dimension (should be consistent with others)
 #smp:
 #  optimizer: adam
 #  lr: 0.0005
 #  name: vaal
-#  latent_dim: 32
+#  latent_dim: 32 # latent space dimension (should be consistent with others)
 #  n_sub_epochs: 1
 
 # Run Hyperparameters
@@ -48,7 +52,7 @@ dec:
   kld_weight: 1
 btk:
   name: vaal
-  z_dim: 32
+  z_dim: 32 # latent space dimension (should be consistent with others)
 
 off_the_shelf_vae:
   load_from_checkpoint: null
@@ -57,8 +61,8 @@ off_the_shelf_vae:
   im_channels: 1
   im_height: 32
 
-cls:
-  optimizer: sgd
-  lr: 0.01
-  name: vaal_with_latent
+cls: # classifier parameters
+  optimizer: sgd # classifier optimizer
+  lr: 0.01 # learning rate of the optimizer
+  name: vaal_with_latent # classifier type (vaal, vaal_with_latent,)
   z_dim: 256

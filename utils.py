@@ -81,34 +81,38 @@ def dataset_parametrizer(cfg):
 
     name = cfg.dataset['name']
 
-    if name == 'cifar10':
+    if name == 'cifar10': # default settings for Cifar-10
 
         cfg.enc['input_size'] = [32, 32]
         cfg.dec['output_size'] = [32, 32]
         cfg.cls['output_size'] = 10
         cfg.cls['in_channels'] = 3
         
-    elif name == 'cifar100':
+    elif name == 'cifar100': # default settings for Cifar-100
 
         cfg.enc['input_size'] = [32, 32]
         cfg.dec['output_size'] = [32, 32]
         cfg.cls['output_size'] = 100
         cfg.cls['in_channels'] = 3
 
-    elif name == 'mnist':
+    elif name == 'mnist': # default settings for MNIST
 
         cfg.enc['input_size'] = [32, 32]
         cfg.dec['output_size'] = [32, 32]
         cfg.cls['output_size'] = 10
         cfg.cls['in_channels'] = 1
         
-    elif name == 'fmnist':
+    elif name == 'fmnist': # default settings for Fashion-MNIST
 
         cfg.enc['input_size'] = [32, 32]
         cfg.dec['output_size'] = [32, 32]
         cfg.cls['output_size'] = 10
         cfg.cls['in_channels'] = 1
-        
+
+    # channel settings for encoder and decoder
+    cfg.enc['in_channels'] = cfg.cls['in_channels']
+    cfg.dec['out_channels'] = cfg.cls['in_channels']
+    
     return cfg
 
 def check_vae_download():
@@ -147,9 +151,7 @@ def seed_everything(seed: int):
 class ModelWriter():
     """
     Custom model saver to the predefined folder with naming:
-    
     save/param/<date>_<experiment_name>_<seed>_<W&B_ID>/<prefix>_weights.pth
-    It is 
     """
     def __init__(self, cfg):
         self.name = wandb.run.name

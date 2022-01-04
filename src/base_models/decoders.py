@@ -36,7 +36,7 @@ class VAAL_Decoder(nn.Module):
         self.kld_weight = cfg_dec['kld_weight']
 
         hidden_dims = [1024, 512, 256, 128]
-        out_channels = 3
+        out_channels = cfg_dec['out_channels']
         layers = []
         for i in range(len(hidden_dims) - 1):
             layers.append(
@@ -89,5 +89,5 @@ def vae_loss(recon, x, *args, **kwargs):
     loss = recons_loss + kld_weight * kld_loss
     return {'loss': loss, 'reconstruction_loss': recons_loss}
 
-
+# dictionary containing decoder classes
 DECODER_DICT = {"base": Base_Decoder, "vaal": VAAL_Decoder}

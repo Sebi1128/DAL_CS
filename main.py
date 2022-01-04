@@ -40,6 +40,7 @@ def main(cfg):
         if run_no < (cfg.n_runs - 1): # no need for sampling in the end
             # 
             train2lbl_idx = sampler.sample(active_dataset, step_acq_size, model)
+            # updating the dataset: setting some trainset values to be 
             active_dataset.update(train2lbl_idx)
 
     # finishing the Weights and Biases run
@@ -72,4 +73,4 @@ if __name__ == "__main__":
         wandb.run.name = datetime.now().strftime("%Y_%m_%d_%H%M")[2:] + '_' \
                          + cfg.experiment_name + '_' + str(cfg.seed) + '_' + wandb.run.id
 
-        main(cfg)
+        main(cfg) # running an experiment with the specified configuration

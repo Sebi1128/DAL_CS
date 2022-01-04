@@ -6,6 +6,7 @@ from .model_utils import kaiming_init
 
 
 class Bottleneck(nn.Module):
+    """Parent class for Bottleneck"""
     def __init__(self, cfg_btk):
         super(Bottleneck, self).__init__()
 
@@ -22,6 +23,7 @@ class Bottleneck(nn.Module):
 
 
 class Base_Bottleneck(Bottleneck):
+    """A dummy bottleneck class with two fully connected layers for testing"""
     def __init__(self, cfg_btk):
         super(Base_Bottleneck, self).__init__(cfg_btk)
 
@@ -47,6 +49,7 @@ class Base_Bottleneck(Bottleneck):
 
 
 class VAAL_Bottleneck(Bottleneck):
+    
     def __init__(self, cfg_btk):
         super(VAAL_Bottleneck, self).__init__(cfg_btk)
         self.z_dim = cfg_btk['z_dim']
